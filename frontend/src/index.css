@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for stable preview iframe */
+.preview-iframe {
+  transition: none !important;
+  animation: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-iframe iframe {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 1;
+}
+
+/* Prevent layout shifts */
+.preview-container {
+  contain: layout style;
+  will-change: auto;
+}
+
+/* Smooth scrolling for form only */
+.form-container {
+  scroll-behavior: smooth;
+}
+
+/* Prevent iframe from causing reflows */
+iframe[title="Resume Preview"] {
+  contain: layout style;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  overflow-anchor: none;
+  scroll-snap-type: none;
+  scroll-behavior: auto !important;
+  image-rendering: optimizeSpeed;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Smooth status indicator */
+.status-indicator {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.status-indicator.updating {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}

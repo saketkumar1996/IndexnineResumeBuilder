@@ -1,10 +1,10 @@
-# Design Document: Deterministic Resume Builder
+# Design Document: Indexnine Resume Builder
 
 ## Overview
 
-The Deterministic Resume Builder is a spec-driven system that enforces strict validation and generates company-compliant resumes without AI assistance. The system follows a rigid pipeline: structured data input → validation → HTML preview → DOCX export, ensuring identical output between preview and final document.
+The Indexnine Resume Builder is a spec-driven system that enforces strict validation and generates company-compliant resumes without AI assistance. The system follows a rigid pipeline: structured data input → validation → HTML preview → DOCX export, ensuring identical output between preview and final document.
 
-The architecture prioritizes deterministic behavior over flexibility, with the Resume_Spec serving as the single source of truth for all validation, rendering, and export operations.
+The architecture prioritizes Indexnine behavior over flexibility, with the Resume_Spec serving as the single source of truth for all validation, rendering, and export operations.
 
 ## Architecture
 
@@ -389,7 +389,7 @@ The system requires both unit testing and property-based testing for comprehensi
 
 **Test Configuration:**
 - Each property test runs minimum 100 iterations with randomized inputs
-- Tests tagged with format: **Feature: deterministic-resume-builder, Property {number}: {property_text}**
+- Tests tagged with format: **Feature: Indexnine-resume-builder, Property {number}: {property_text}**
 - Property tests validate universal correctness properties from design document
 - Unit tests validate specific examples and integration scenarios
 

@@ -1,26 +1,26 @@
-# Implementation Plan: Deterministic Resume Builder
+# Implementation Plan: Indexnine Resume Builder
 
 ## Overview
 
-This implementation plan converts the deterministic resume builder design into discrete coding tasks. The approach follows the strict pipeline: backend validation models → frontend form interface → rendering engines → integration. Each task builds incrementally to ensure early validation of core functionality through code.
+This implementation plan converts the Indexnine resume builder design into discrete coding tasks. The approach follows the strict pipeline: backend validation models → frontend form interface → rendering engines → integration. Each task builds incrementally to ensure early validation of core functionality through code.
 
 ## Tasks
 
-- [ ] 1. Set up project structure and core dependencies
+- [x] 1. Set up project structure and core dependencies
   - Create backend directory with FastAPI, Pydantic, Jinja2, python-docx dependencies
   - Create frontend directory with React, TypeScript, React Hook Form, Zod, Tailwind CSS
   - Set up testing frameworks: Hypothesis (Python), fast-check (TypeScript)
   - Configure project build and development scripts
   - _Requirements: 5.1, 5.2_
 
-- [ ] 2. Implement backend validation models
-  - [ ] 2.1 Create Pydantic models for all resume sections
+- [-] 2. Implement backend validation models
+  - [x] 2.1 Create Pydantic models for all resume sections
     - Implement HeaderModel, ExpertiseModel, SkillsModel, ExperienceModel, ProjectModel, EducationModel, AwardModel
     - Add field validation with regex patterns, length constraints, and custom validators
     - Implement ResumeModel as complete data structure with section validation
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 6.2, 6.3, 6.4_
 
-  - [ ] 2.2 Write property test for date format validation
+  - [x] 2.2 Write property test for date format validation
     - **Property 4: Date format validation**
     - **Validates: Requirements 2.2**
 
@@ -36,26 +36,26 @@ This implementation plan converts the deterministic resume builder design into d
     - **Property 7: Content sanitization**
     - **Validates: Requirements 2.5**
 
-- [ ] 3. Create FastAPI backend endpoints
-  - [ ] 3.1 Implement validation endpoint
+- [x] 3. Create FastAPI backend endpoints
+  - [x] 3.1 Implement validation endpoint
     - Create POST /api/validate endpoint accepting ResumeModel
     - Return structured validation results with field-specific errors
     - Handle Pydantic validation exceptions with proper error formatting
     - _Requirements: 5.2, 5.3, 5.4_
 
-  - [ ] 3.2 Implement preview generation endpoint
+  - [x] 3.2 Implement preview generation endpoint
     - Create POST /api/preview endpoint for HTML generation
     - Integrate with Jinja2 template rendering
     - Return HTML content for valid data, errors for invalid data
     - _Requirements: 3.2, 3.5_
 
-  - [ ] 3.3 Implement DOCX export endpoint
+  - [x] 3.3 Implement DOCX export endpoint
     - Create POST /api/export endpoint for document generation
     - Integrate with python-docx library for file creation
     - Return file response with proper headers and content type
     - _Requirements: 4.1, 4.5_
 
-  - [ ] 3.4 Write unit tests for API endpoints
+  - [x] 3.4 Write unit tests for API endpoints
     - Test endpoint responses with valid and invalid data
     - Test error handling and status codes
     - _Requirements: 5.2, 7.4_
@@ -63,13 +63,13 @@ This implementation plan converts the deterministic resume builder design into d
 - [ ] 4. Checkpoint - Ensure backend validation works
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 5. Create frontend Zod validation schemas
-  - [ ] 5.1 Implement TypeScript interfaces mirroring Pydantic models
+- [-] 5. Create frontend Zod validation schemas
+  - [x] 5.1 Implement TypeScript interfaces mirroring Pydantic models
     - Create ResumeData, HeaderData, ExpertiseData, and all section interfaces
     - Ensure exact type compatibility with backend models
     - _Requirements: 1.5, 5.5_
 
-  - [ ] 5.2 Create Zod schemas matching backend validation
+  - [x] 5.2 Create Zod schemas matching backend validation
     - Implement ResumeSchema with all section schemas
     - Add identical validation rules: regex patterns, length constraints, custom validators
     - _Requirements: 1.5, 5.5_
@@ -78,14 +78,14 @@ This implementation plan converts the deterministic resume builder design into d
     - **Property 1: Real-time validation consistency**
     - **Validates: Requirements 1.2, 5.5, 7.5**
 
-- [ ] 6. Implement React form interface
-  - [ ] 6.1 Create form section components
+- [-] 6. Implement React form interface
+  - [x] 6.1 Create form section components
     - Implement HeaderSection, ExpertiseSection, SkillsSection, ExperienceSection, ProjectSection, EducationSection, AwardSection components
     - Use React Hook Form with Zod resolver for validation
     - Add real-time validation feedback and error display
     - _Requirements: 1.1, 1.2, 1.4_
 
-  - [ ] 6.2 Create main form container component
+  - [x] 6.2 Create main form container component
     - Integrate all section components with form state management
     - Implement export button with validation-based enabling/disabling
     - Add form submission handling and API integration

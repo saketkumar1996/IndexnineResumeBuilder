@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Preview</title>
+    <style>
+        /* Company template styles matching DOCX output */
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 11pt;
+            line-height: 1.2;
+            margin: 0.5in;
+            color: #000;
+            background: white;
+        }
+        
+        .resume-container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            background: white;
+            padding: 0;
+        }
+        
+        .header-section {
+            text-align: center;
+            margin-bottom: 12pt;
+        }
+        
+        .name {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 4pt;
+        }
+        
+        .title {
+            font-size: 11pt;
+            margin-bottom: 4pt;
+        }
+        
+        .contact-info {
+            font-size: 10pt;
+            margin-bottom: 12pt;
+        }
+        
+        .section-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11pt;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2pt;
+        }
+        
+        .section-content {
+            margin-bottom: 12pt;
+        }
+        
+        .experience-item, .project-item, .education-item, .award-item {
+            margin-bottom: 12pt;
+        }
+        
+        .item-header {
+            font-weight: bold;
+            margin-bottom: 2pt;
+        }
+        
+        .item-dates {
+            font-style: italic;
+            margin-bottom: 4pt;
+        }
+        
+        .responsibilities {
+            margin-left: 20pt;
+        }
+        
+        .responsibility {
+            margin-bottom: 2pt;
+        }
+        
+        .responsibility:before {
+            content: "• ";
+            margin-left: -12pt;
+        }
+        
+        .technologies {
+            font-style: italic;
+            margin-top: 4pt;
+        }
+        
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 12pt;
+            border: 1px solid #d32f2f;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="resume-container">
+        {% if resume %}
+            <!-- Header Section -->
+            <div class="header-section">
+                <div class="name">{{ resume.header.name }}</div>
+                <div class="title">{{ resume.header.title }}</div>
+                <div class="contact-info">
+                    {{ resume.header.email }} | {{ resume.header.phone }} | {{ resume.header.location }}
+                </div>
+            </div>
+
+            <!-- Expertise Summary Section -->
+            <div class="section-header">EXPERTISE SUMMARY</div>
+            <div class="section-content">
+                {{ resume.expertise.summary }}
+            </div>
+
+            <!-- Skills Section -->
+            <div class="section-header">SKILLS</div>
+            <div class="section-content">
+                {{ resume.skills.skills }}
+            </div>
+
+            <!-- Experience Section -->
+            <div class="section-header">EXPERIENCE</div>
+            <div class="section-content">
+                {% for exp in resume.experience %}
+                    <div class="experience-item">
+                        <div class="item-header">{{ exp.company }} - {{ exp.position }}</div>
+                        <div class="item-dates">{{ exp.start_date }} - {{ exp.end_date or 'Present' }}</div>
+                        <div class="responsibilities">
+                            {% for responsibility in exp.responsibilities %}
+                                <div class="responsibility">{{ responsibility }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Project Experience Section -->
+            <div class="section-header">PROJECT EXPERIENCE</div>
+            <div class="section-content">
+                {% for project in resume.projects %}
+                    <div class="project-item">
+                        <div class="item-header">{{ project.name }}</div>
+                        <div class="item-dates">{{ project.start_date }} - {{ project.end_date or 'Present' }}</div>
+                        <div>{{ project.description }}</div>
+                        <div class="technologies">Technologies: {{ project.technologies }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Education Section -->
+            <div class="section-header">EDUCATION</div>
+            <div class="section-content">
+                {% for edu in resume.education %}
+                    <div class="education-item">
+                        <div class="item-header">{{ edu.institution }} - {{ edu.degree }} in {{ edu.field_of_study }}</div>
+                        <div class="item-dates">
+                            Graduated: {{ edu.graduation_date }}
+                            {% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Awards Section (Optional) -->
+            {% if resume.awards and resume.awards|length > 0 %}
+                <div class="section-header">AWARDS</div>
+                <div class="section-content">
+                    {% for award in resume.awards %}
+                        <div class="award-item">
+                            <div class="item-header">{{ award.title }} - {{ award.organization }}</div>
+                            <div class="item-dates">{{ award.date }}</div>
+                            {% if award.description %}
+                                <div>{{ award.description }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="error">
+                No resume data provided for preview generation.
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

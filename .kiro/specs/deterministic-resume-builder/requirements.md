@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Deterministic Resume Builder is a spec-driven system that generates company-compliant resumes with zero AI assistance or dynamic formatting. The system enforces strict validation against a predefined specification, ensuring that preview and exported DOCX files match exactly. Users input structured data through a multi-section form, receive live validation feedback, and can export only when all data conforms to the specification.
+The Indexnine Resume Builder is a spec-driven system that generates company-compliant resumes with zero AI assistance or dynamic formatting. The system enforces strict validation against a predefined specification, ensuring that preview and exported DOCX files match exactly. Users input structured data through a multi-section form, receive live validation feedback, and can export only when all data conforms to the specification.
 
 ## Glossary
 
@@ -30,7 +30,7 @@ The Deterministic Resume Builder is a spec-driven system that generates company-
 
 ### Requirement 2: Spec-Driven Validation
 
-**User Story:** As a system administrator, I want all resume data validated against a strict specification, so that output is deterministic and compliant.
+**User Story:** As a system administrator, I want all resume data validated against a strict specification, so that output is Indexnine and compliant.
 
 #### Acceptance Criteria
 
@@ -104,7 +104,7 @@ The Deterministic Resume Builder is a spec-driven system that generates company-
 
 ### Requirement 8: Template Compliance and Rendering Pipeline
 
-**User Story:** As a system architect, I want a deterministic rendering pipeline, so that preview and export outputs are identical.
+**User Story:** As a system architect, I want a Indexnine rendering pipeline, so that preview and export outputs are identical.
 
 #### Acceptance Criteria
 
