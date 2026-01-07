@@ -162,12 +162,12 @@ async def generate_preview(resume_data: Dict[str, Any]) -> PreviewResponse:
 
 
 @router.post("/export")
-async def export_docx(resume_data: Dict[str, Any]):
+async def export_pdf(resume_data: Dict[str, Any]):
     """
-    Generate DOCX file for validated data
+    Generate PDF file for validated data
     
-    This endpoint validates the resume data and generates a DOCX file using
-    python-docx library with the Company_Template structure.
+    This endpoint validates the resume data and generates a PDF file using
+    WeasyPrint library with HTML template rendering.
     
     Requirements: 4.1, 4.5
     """
@@ -177,28 +177,17 @@ async def export_docx(resume_data: Dict[str, Any]):
         
         # Import renderer and FastAPI response classes
         from rendering.resume_renderer import ResumeRenderer
-        from fastapi.responses import FileResponse
-        import tempfile
-        import os
-        from uuid import uuid4
+        from fastapi.responses import Response
         
-        # Generate DOCX document
+        # Generate PDF document
         renderer = ResumeRenderer(template_path="templates")
-        doc = renderer.generate_docx(validated_resume)
+        pdf_bytes = renderer.generate_pdf(validated_resume)
         
-        # Save to temporary file
-        temp_dir = tempfile.gettempdir()
-        temp_filename = f"resume_{uuid4()}.docx"
-        temp_path = os.path.join(temp_dir, temp_filename)
-        
-        doc.save(temp_path)
-        
-        # Return file response
-        return FileResponse(
-            path=temp_path,
-            filename="resume.docx",
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": "attachment; filename=resume.docx"}
+        # Return PDF response
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=resume.pdf"}
         )
         
     except ValidationError as e:
@@ -220,5 +209,5 @@ async def export_docx(resume_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Error generating DOCX export: {str(e)}"
+            detail=f"Error generating PDF export: {str(e)}"
         )

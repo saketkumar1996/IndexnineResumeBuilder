@@ -5,12 +5,12 @@
 ## Core Purpose
 - Generate ATS-friendly, structured resumes that match company standards exactly
 - Enforce strict validation rules to ensure compliance with resume specifications
-- Provide identical output between preview and final DOCX export
+- Provide identical output between preview and final PDF export
 
 ## Key Features
 - **Spec Compliance**: Enforces company standards with detailed error feedback
 - **Real-time Validation**: Live validation and preview updates during form completion
-- **Identical Output**: Preview HTML and exported DOCX files match exactly
+- **Identical Output**: Preview HTML and exported PDF files match exactly
 - **Property-Based Testing**: Comprehensive correctness validation using Hypothesis
 - **Zero AI**: No dynamic formatting or AI-generated content - purely rule-based
 

@@ -1,14 +1,18 @@
 """
-Resume rendering module for HTML and DOCX generation
+Resume rendering module for HTML and PDF generation
 Handles template rendering and document creation with consistent output
 """
 
 from jinja2 import Environment, FileSystemLoader
-from docx import Document
-from docx.shared import Inches
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from models.resume_models import ResumeModel
 from typing import Dict, Any
 import os
+import io
 
 
 class ResumeRenderer:
@@ -37,69 +41,150 @@ class ResumeRenderer:
             # Fallback to basic partial HTML
             return self._generate_partial_html(partial_data)
     
-    def generate_docx(self, resume_data: ResumeModel) -> Document:
-        """Generate DOCX document from resume data"""
-        doc = Document()
+    def generate_pdf(self, resume_data: ResumeModel) -> bytes:
+        """Generate PDF document from resume data using ReportLab"""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, 
+                              rightMargin=0.75*inch, leftMargin=0.75*inch,
+                              topMargin=0.75*inch, bottomMargin=0.75*inch)
+        
+        # Get styles
+        styles = getSampleStyleSheet()
+        
+        # Custom styles
+        name_style = ParagraphStyle(
+            'NameStyle',
+            parent=styles['Heading1'],
+            fontSize=18,
+            alignment=TA_CENTER,
+            spaceAfter=6
+        )
+        
+        title_style = ParagraphStyle(
+            'TitleStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            alignment=TA_CENTER,
+            spaceAfter=4
+        )
+        
+        contact_style = ParagraphStyle(
+            'ContactStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=TA_CENTER,
+            spaceAfter=12
+        )
+        
+        section_header_style = ParagraphStyle(
+            'SectionHeaderStyle',
+            parent=styles['Heading2'],
+            fontSize=12,
+            fontName='Helvetica-Bold',
+            spaceAfter=6,
+            spaceBefore=12,
+            textTransform='uppercase'
+        )
+        
+        body_style = ParagraphStyle(
+            'BodyStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=6
+        )
+        
+        item_header_style = ParagraphStyle(
+            'ItemHeaderStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            fontName='Helvetica-Bold',
+            spaceAfter=2
+        )
+        
+        date_style = ParagraphStyle(
+            'DateStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            fontName='Helvetica-Oblique',
+            spaceAfter=4
+        )
+        
+        # Build story
+        story = []
         
         # Header section
-        header_para = doc.add_paragraph()
-        header_para.alignment = 1  # Center alignment
-        name_run = header_para.add_run(resume_data.header.name)
-        name_run.bold = True
-        name_run.font.size = 14
+        story.append(Paragraph(resume_data.header.name, name_style))
+        story.append(Paragraph(resume_data.header.title, title_style))
+        contact_info = f"{resume_data.header.email} | {resume_data.header.phone} | {resume_data.header.location}"
+        story.append(Paragraph(contact_info, contact_style))
         
-        header_para.add_run(f"\n{resume_data.header.title}")
-        header_para.add_run(f"\n{resume_data.header.email} | {resume_data.header.phone}")
-        header_para.add_run(f"\n{resume_data.header.location}")
+        # Add a line separator
+        story.append(Spacer(1, 6))
         
         # Expertise section
-        doc.add_heading("EXPERTISE", level=2)
-        doc.add_paragraph(resume_data.expertise.summary)
+        story.append(Paragraph("EXPERTISE", section_header_style))
+        story.append(Paragraph(resume_data.expertise.summary, body_style))
         
         # Skills section
-        doc.add_heading("SKILLS", level=2)
-        doc.add_paragraph(resume_data.skills.skills)
+        story.append(Paragraph("SKILLS", section_header_style))
+        story.append(Paragraph(resume_data.skills.skills, body_style))
         
         # Experience section
-        doc.add_heading("EXPERIENCE", level=2)
+        story.append(Paragraph("EXPERIENCE", section_header_style))
         for exp in resume_data.experience:
-            exp_para = doc.add_paragraph()
-            exp_para.add_run(f"{exp.company} - {exp.position}").bold = True
-            exp_para.add_run(f"\n{exp.start_date} - {exp.end_date or 'Present'}")
+            exp_content = []
+            exp_content.append(Paragraph(f"{exp.company} - {exp.position}", item_header_style))
+            exp_content.append(Paragraph(f"{exp.start_date} - {exp.end_date or 'Present'}", date_style))
             
             for responsibility in exp.responsibilities:
-                doc.add_paragraph(f"• {responsibility}")
+                exp_content.append(Paragraph(f"• {responsibility}", body_style))
+            
+            story.append(KeepTogether(exp_content))
+            story.append(Spacer(1, 6))
         
         # Projects section
-        doc.add_heading("PROJECT EXPERIENCE", level=2)
+        story.append(Paragraph("PROJECT EXPERIENCE", section_header_style))
         for project in resume_data.projects:
-            proj_para = doc.add_paragraph()
-            proj_para.add_run(project.name).bold = True
-            proj_para.add_run(f"\n{project.start_date} - {project.end_date or 'Present'}")
-            doc.add_paragraph(project.description)
-            doc.add_paragraph(f"Technologies: {project.technologies}")
+            proj_content = []
+            proj_content.append(Paragraph(project.name, item_header_style))
+            proj_content.append(Paragraph(f"{project.start_date} - {project.end_date or 'Present'}", date_style))
+            proj_content.append(Paragraph(project.description, body_style))
+            proj_content.append(Paragraph(f"<b>Technologies:</b> {project.technologies}", body_style))
+            
+            story.append(KeepTogether(proj_content))
+            story.append(Spacer(1, 6))
         
         # Education section
-        doc.add_heading("EDUCATION", level=2)
+        story.append(Paragraph("EDUCATION", section_header_style))
         for edu in resume_data.education:
-            edu_para = doc.add_paragraph()
-            edu_para.add_run(f"{edu.institution} - {edu.degree}").bold = True
-            edu_para.add_run(f"\n{edu.field_of_study}")
-            edu_para.add_run(f"\nGraduated: {edu.graduation_date}")
+            edu_content = []
+            edu_content.append(Paragraph(f"{edu.institution} - {edu.degree}", item_header_style))
+            edu_content.append(Paragraph(edu.field_of_study, body_style))
+            grad_info = f"Graduated: {edu.graduation_date}"
             if edu.gpa:
-                edu_para.add_run(f" | GPA: {edu.gpa}")
+                grad_info += f" | GPA: {edu.gpa}"
+            edu_content.append(Paragraph(grad_info, date_style))
+            
+            story.append(KeepTogether(edu_content))
+            story.append(Spacer(1, 6))
         
         # Awards section (if any)
         if resume_data.awards:
-            doc.add_heading("AWARDS", level=2)
+            story.append(Paragraph("AWARDS", section_header_style))
             for award in resume_data.awards:
-                award_para = doc.add_paragraph()
-                award_para.add_run(f"{award.title} - {award.organization}").bold = True
-                award_para.add_run(f"\n{award.date}")
+                award_content = []
+                award_content.append(Paragraph(f"{award.title} - {award.organization}", item_header_style))
+                award_content.append(Paragraph(award.date, date_style))
                 if award.description:
-                    award_para.add_run(f"\n{award.description}")
+                    award_content.append(Paragraph(award.description, body_style))
+                
+                story.append(KeepTogether(award_content))
+                story.append(Spacer(1, 6))
         
-        return doc
+        # Build PDF
+        doc.build(story)
+        buffer.seek(0)
+        return buffer.getvalue()
     
     def _generate_basic_html(self, resume_data: ResumeModel) -> str:
         """Generate basic HTML structure as fallback"""

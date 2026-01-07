@@ -19,7 +19,7 @@ backend/
 │   ├── resume_models.py  # Pydantic models with validation rules
 │   └── __init__.py
 ├── rendering/
-│   ├── resume_renderer.py # HTML/DOCX generation logic
+│   ├── resume_renderer.py # HTML/PDF generation logic
 │   └── __init__.py
 ├── templates/
 │   ├── resume.html       # Main Jinja2 template
@@ -68,7 +68,7 @@ frontend/
 ### API Endpoints Pattern
 - `/api/validate` - Validates resume data, returns structured errors
 - `/api/preview` - Generates HTML preview with validation
-- `/api/export` - Creates DOCX file (only for valid data)
+- `/api/export` - Creates PDF file (only for valid data)
 
 ### Testing Structure
 - Property-based tests in `backend/tests/test_property_*.py`
@@ -79,7 +79,7 @@ frontend/
 ### Template Organization
 - `templates/resume.html` - Complete resume template
 - `templates/resume_partial.html` - Error state template
-- Templates must produce identical layout to DOCX output
+- Templates must produce consistent layout between HTML preview and PDF output
 
 ### Component Hierarchy
 - `ResumeForm.tsx` - Main form orchestrator

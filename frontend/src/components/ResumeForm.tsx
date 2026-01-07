@@ -26,6 +26,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
     handleSubmit,
     watch,
     control,
+    reset,
     formState: { errors, isValid }
   } = useForm<ResumeFormData>({
     resolver: zodResolver(ResumeSchema),
@@ -70,6 +71,49 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
     }
   });
 
+  // Sample data that complies with all validation rules
+  const sampleData: ResumeFormData = {
+    header: {
+      name: 'John Smith',
+      title: 'Senior Software Engineer',
+      email: 'john.smith@email.com',
+      phone: '+1 (555) 123-4567',
+      location: 'San Francisco, CA'
+    },
+    expertise: {
+      summary: 'Experienced software engineer with over 8 years of expertise in full-stack development, cloud architecture, and team leadership. Proven track record of delivering scalable web applications using modern technologies including React, Node.js, Python, and AWS services. Strong background in agile methodologies, code review processes, and mentoring junior developers. Passionate about building high-performance systems that solve complex business problems while maintaining clean, maintainable code. Experienced in leading cross-functional teams and driving technical decisions that align with business objectives and industry best practices.'
+    },
+    skills: {
+      skills: 'JavaScript, TypeScript, React, Node.js, Python, FastAPI, AWS, Docker, Kubernetes, PostgreSQL, MongoDB, Git, CI/CD, Agile, Scrum'
+    },
+    experience: [{
+      company: 'Tech Solutions Inc',
+      position: 'Senior Software Engineer',
+      start_date: 'JAN 2020',
+      end_date: 'Present',
+      responsibilities: [
+        'Led development of microservices architecture serving 1M+ daily active users',
+        'Implemented CI/CD pipelines reducing deployment time by 75% and improving reliability',
+        'Mentored 5 junior developers and conducted code reviews to maintain high code quality standards'
+      ]
+    }],
+    projects: [{
+      name: 'E-commerce Platform Redesign',
+      description: 'Complete redesign of legacy e-commerce platform using modern React and Node.js stack',
+      technologies: 'React, Node.js, PostgreSQL, AWS, Docker',
+      start_date: 'MAR 2023',
+      end_date: 'SEP 2023'
+    }],
+    education: [{
+      institution: 'University of California',
+      degree: 'Bachelor of Science',
+      field_of_study: 'Computer Science',
+      graduation_date: 'MAY 2016',
+      gpa: '3.8'
+    }],
+    awards: []
+  };
+
   // Watch all form data for real-time validation and preview
   const watchedData = watch();
 
@@ -77,6 +121,10 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
     // Always call onFormChange with current data, don't validate for preview
     onFormChange(watchedData, isValid);
   }, [watchedData, isValid, onFormChange]);
+
+  const handlePrefillForm = () => {
+    reset(sampleData);
+  };
 
   const onSubmit = (data: ResumeFormData) => {
     onFormChange(data, true);
@@ -123,6 +171,13 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               type="button"
+              onClick={handlePrefillForm}
+              className="flex-1 px-6 py-3 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Fill Sample Data
+            </button>
+            <button
+              type="button"
               onClick={handleExport}
               disabled={!isValid || isExporting}
               className={`flex-1 px-6 py-3 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
@@ -131,7 +186,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {isExporting ? 'Exporting...' : 'Export DOCX'}
+              {isExporting ? 'Exporting...' : 'Export PDF'}
             </button>
           </div>
 

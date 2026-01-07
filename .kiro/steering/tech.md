@@ -4,7 +4,7 @@
 - **Framework**: FastAPI 0.104.1
 - **Validation**: Pydantic models with strict validation rules
 - **Templating**: Jinja2 for HTML preview generation
-- **Document Generation**: python-docx for DOCX export
+- **Document Generation**: ReportLab for PDF export
 - **Testing**: pytest + Hypothesis for property-based testing
 - **Server**: Uvicorn ASGI server
 
@@ -18,7 +18,7 @@
 ## Architecture Patterns
 - **Validation Strategy**: Dual validation (Zod frontend + Pydantic backend) with identical rules
 - **API Design**: RESTful endpoints with structured error responses
-- **Template Rendering**: Jinja2 templates that mirror DOCX layout exactly
+- **Template Rendering**: Jinja2 templates for HTML preview with ReportLab PDF generation
 - **Error Handling**: Field-specific validation errors with spec references
 
 ## Common Commands
