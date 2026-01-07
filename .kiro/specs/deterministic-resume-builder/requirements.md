@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Indexnine Resume Builder is a spec-driven system that generates company-compliant resumes with zero AI assistance or dynamic formatting. The system enforces strict validation against a predefined specification, ensuring that preview and exported DOCX files match exactly. Users input structured data through a multi-section form, receive live validation feedback, and can export only when all data conforms to the specification.
+The Indexnine Resume Builder is a spec-driven system that generates company-compliant resumes with zero AI assistance or dynamic formatting. The system enforces strict validation against a predefined specification, ensuring that preview and exported PDF files maintain consistent formatting. Users input structured data through a multi-section form, receive live validation feedback, and can export only when all data conforms to the specification.
 
 ## Glossary
 
@@ -11,8 +11,8 @@ The Indexnine Resume Builder is a spec-driven system that generates company-comp
 - **Form_Interface**: The React-based multi-section form for data collection
 - **Validation_Engine**: The Pydantic-based system that enforces spec compliance
 - **Preview_Renderer**: The HTML rendering system using Jinja2 templates
-- **DOCX_Generator**: The python-docx based system for final document export
-- **Company_Template**: The approved DOCX template defining fonts, margins, and layout
+- **PDF_Generator**: The ReportLab based system for final document export
+- **Company_Template**: The approved PDF template defining fonts, margins, and layout
 
 ## Requirements
 
@@ -54,17 +54,17 @@ The Indexnine Resume Builder is a spec-driven system that generates company-comp
 4. THE Preview_Renderer SHALL use identical fonts, margins, and spacing as the DOCX output
 5. WHEN validation fails, THE Preview_Renderer SHALL display validation errors instead of preview content
 
-### Requirement 4: DOCX Export Generation
+### Requirement 4: PDF Export Generation
 
-**User Story:** As a user, I want to export my resume as a DOCX file, so that I can submit it for job applications.
+**User Story:** As a user, I want to export my resume as a PDF file, so that I can submit it for job applications.
 
 #### Acceptance Criteria
 
-1. THE DOCX_Generator SHALL create output using python-docx library with the Company_Template structure
-2. THE DOCX_Generator SHALL produce output that matches the HTML preview exactly
-3. THE DOCX_Generator SHALL generate ATS-friendly documents with proper structure
-4. THE DOCX_Generator SHALL enforce one-page output limitation
-5. WHEN export is requested, THE DOCX_Generator SHALL only proceed if all validation passes
+1. THE PDF_Generator SHALL create output using ReportLab library with professional formatting
+2. THE PDF_Generator SHALL produce output that maintains consistent formatting with the HTML preview
+3. THE PDF_Generator SHALL generate ATS-friendly documents with proper structure
+4. THE PDF_Generator SHALL enforce one-page output limitation
+5. WHEN export is requested, THE PDF_Generator SHALL only proceed if all validation passes
 
 ### Requirement 5: Backend API Structure
 
@@ -73,7 +73,7 @@ The Indexnine Resume Builder is a spec-driven system that generates company-comp
 #### Acceptance Criteria
 
 1. THE Resume_Builder SHALL provide a FastAPI backend with Pydantic models for all resume sections
-2. THE Resume_Builder SHALL expose endpoints for validation, preview generation, and DOCX export
+2. THE Resume_Builder SHALL expose endpoints for validation, preview generation, and PDF export
 3. WHEN data is submitted, THE Resume_Builder SHALL validate using Pydantic models before processing
 4. THE Resume_Builder SHALL return structured JSON responses with validation results
 5. THE Resume_Builder SHALL maintain identical validation logic between frontend Zod and backend Pydantic
@@ -102,14 +102,26 @@ The Indexnine Resume Builder is a spec-driven system that generates company-comp
 4. WHEN server errors occur, THE Form_Interface SHALL display user-friendly error messages
 5. THE Form_Interface SHALL provide real-time validation feedback without requiring form submission
 
+### Requirement 9: Sample Data and User Experience
+
+**User Story:** As a user, I want to quickly populate the form with sample data, so that I can test the system and see a complete example.
+
+#### Acceptance Criteria
+
+1. THE Form_Interface SHALL provide a "Fill Sample Data" button that populates all form sections
+2. THE sample data SHALL comply with all validation rules and pass spec validation
+3. THE sample data SHALL demonstrate proper formatting for all field types including dates, word counts, and responsibilities
+4. WHEN sample data is filled, THE Form_Interface SHALL immediately enable preview and export functionality
+5. THE sample data SHALL include realistic professional content suitable for demonstration purposes
+
 ### Requirement 8: Template Compliance and Rendering Pipeline
 
 **User Story:** As a system architect, I want a Indexnine rendering pipeline, so that preview and export outputs are identical.
 
 #### Acceptance Criteria
 
-1. THE Resume_Builder SHALL follow the pipeline: Form Input → Spec Validation → Pydantic Validation → HTML Rendering → Preview Display → DOCX Generation
-2. THE Preview_Renderer SHALL use the same data structure as the DOCX_Generator
-3. THE Resume_Builder SHALL maintain structural alignment between HTML and DOCX outputs
+1. THE Resume_Builder SHALL follow the pipeline: Form Input → Spec Validation → Pydantic Validation → HTML Rendering → Preview Display → PDF Generation
+2. THE Preview_Renderer SHALL use the same data structure as the PDF_Generator
+3. THE Resume_Builder SHALL maintain structural alignment between HTML and PDF outputs
 4. THE Resume_Builder SHALL use the Company_Template as the single source of truth for formatting
 5. WHEN rendering occurs, THE Resume_Builder SHALL apply no dynamic formatting or layout adjustments
