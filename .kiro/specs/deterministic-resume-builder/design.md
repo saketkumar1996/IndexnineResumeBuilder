@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Indexnine Resume Builder is a spec-driven system that enforces strict validation and generates company-compliant resumes without AI assistance. The system follows a rigid pipeline: structured data input → validation → HTML preview → DOCX export, ensuring identical output between preview and final document.
+The Indexnine Resume Builder is a spec-driven system that enforces strict validation and generates company-compliant resumes without AI assistance. The system follows a rigid pipeline: structured data input → validation → HTML preview → PDF export, ensuring consistent formatting between preview and final document.
 
 The architecture prioritizes Indexnine behavior over flexibility, with the Resume_Spec serving as the single source of truth for all validation, rendering, and export operations.
 
@@ -17,8 +17,8 @@ graph TB
     C --> D[Pydantic Server Validation]
     D --> E[Jinja2 HTML Renderer]
     E --> F[Preview Display]
-    D --> G[python-docx Generator]
-    G --> H[DOCX Export]
+    D --> G[ReportLab PDF Generator]
+    G --> H[PDF Export]
     
     I[Resume Spec] --> B
     I --> D
@@ -49,8 +49,8 @@ graph TB
 2. **Client Validation**: Zod schemas validate data in real-time, mirroring server validation
 3. **Server Validation**: Pydantic models enforce spec compliance with detailed error reporting
 4. **HTML Generation**: Jinja2 templates render validated data using Company_Template structure
-5. **Preview Display**: HTML preview displays in isolated iframe with identical formatting
-6. **DOCX Generation**: python-docx creates final document using same data structure and formatting
+5. **Preview Display**: HTML preview displays in isolated iframe with consistent formatting
+6. **PDF Generation**: ReportLab creates final document using same data structure and formatting
 
 ## Components and Interfaces
 
@@ -139,8 +139,10 @@ class ExperienceModel(BaseModel):
 #### Rendering Engine
 ```python
 from jinja2 import Environment, FileSystemLoader
-from docx import Document
-from docx.shared import Inches
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+import io
 
 class ResumeRenderer:
     def __init__(self, template_path: str):
@@ -148,17 +150,16 @@ class ResumeRenderer:
         self.html_template = self.jinja_env.get_template('resume.html')
         
     def render_html(self, resume_data: ResumeModel) -> str:
-        """Generate HTML preview matching DOCX layout"""
+        """Generate HTML preview with consistent PDF formatting"""
         return self.html_template.render(resume=resume_data)
         
-    def generate_docx(self, resume_data: ResumeModel) -> Document:
-        """Generate DOCX using identical structure to HTML"""
-        doc = Document()
-        self._apply_company_template_styles(doc)
-        self._add_header_section(doc, resume_data.header)
-        self._add_expertise_section(doc, resume_data.expertise)
-        # ... additional sections
-        return doc
+    def generate_pdf(self, resume_data: ResumeModel) -> bytes:
+        """Generate PDF using ReportLab with professional formatting"""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        story = self._build_pdf_content(resume_data)
+        doc.build(story)
+        return buffer.getvalue()
 ```
 
 ### API Endpoints
@@ -188,15 +189,16 @@ async def generate_preview(resume_data: ResumeModel) -> PreviewResponse:
 #### Export Endpoint
 ```python
 @app.post("/api/export")
-async def export_docx(resume_data: ResumeModel) -> FileResponse:
-    """Generate DOCX file for validated data"""
+async def export_pdf(resume_data: ResumeModel) -> Response:
+    """Generate PDF file for validated data"""
     renderer = ResumeRenderer(template_path="templates")
-    doc = renderer.generate_docx(resume_data)
+    pdf_bytes = renderer.generate_pdf(resume_data)
     
-    # Save to temporary file and return
-    temp_path = f"/tmp/resume_{uuid4()}.docx"
-    doc.save(temp_path)
-    return FileResponse(temp_path, filename="resume.docx")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=resume.pdf"}
+    )
 ```
 
 ## Data Models
@@ -292,15 +294,15 @@ Based on the prework analysis and property reflection, the following properties 
 **Validates: Requirements 3.2, 3.5**
 
 **Property 9: Output format consistency**
-*For any* valid resume data, the HTML preview and DOCX export should maintain structural alignment with identical section order and content organization
+*For any* valid resume data, the HTML preview and PDF export should maintain structural alignment with consistent section order and content organization
 **Validates: Requirements 4.2, 8.3**
 
 **Property 10: One-page output constraint**
-*For any* valid resume data, the DOCX generator should enforce one-page output limitation regardless of content length
+*For any* valid resume data, the PDF generator should enforce one-page output limitation regardless of content length
 **Validates: Requirements 4.4**
 
 **Property 11: Processing pipeline order**
-*For any* resume submission, the system should follow the exact pipeline order: Form Input → Spec Validation → Pydantic Validation → HTML Rendering → Preview Display → DOCX Generation
+*For any* resume submission, the system should follow the exact pipeline order: Form Input → Spec Validation → Pydantic Validation → HTML Rendering → Preview Display → PDF Generation
 **Validates: Requirements 8.1**
 
 **Property 12: Skills format validation**
@@ -357,9 +359,9 @@ Based on the prework analysis and property reflection, the following properties 
 - Data serialization errors show field-specific validation guidance
 - Network failures provide retry mechanisms with exponential backoff
 
-**DOCX Generation Errors:**
-- File system errors return appropriate HTTP status codes
-- Template processing errors include diagnostic information
+**PDF Generation Errors:**
+- File generation errors return appropriate HTTP status codes
+- Content processing errors include diagnostic information
 - Memory constraints trigger graceful degradation with user notification
 
 ## Testing Strategy

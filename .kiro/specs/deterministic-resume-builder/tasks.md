@@ -7,7 +7,7 @@ This implementation plan converts the Indexnine resume builder design into discr
 ## Tasks
 
 - [x] 1. Set up project structure and core dependencies
-  - Create backend directory with FastAPI, Pydantic, Jinja2, python-docx dependencies
+  - Create backend directory with FastAPI, Pydantic, Jinja2, ReportLab dependencies
   - Create frontend directory with React, TypeScript, React Hook Form, Zod, Tailwind CSS
   - Set up testing frameworks: Hypothesis (Python), fast-check (TypeScript)
   - Configure project build and development scripts
@@ -49,10 +49,10 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Return HTML content for valid data, errors for invalid data
     - _Requirements: 3.2, 3.5_
 
-  - [x] 3.3 Implement DOCX export endpoint
+  - [x] 3.3 Implement PDF export endpoint
     - Create POST /api/export endpoint for document generation
-    - Integrate with python-docx library for file creation
-    - Return file response with proper headers and content type
+    - Integrate with ReportLab library for PDF creation
+    - Return PDF response with proper headers and content type
     - _Requirements: 4.1, 4.5_
 
   - [x] 3.4 Write unit tests for API endpoints
@@ -89,7 +89,8 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Integrate all section components with form state management
     - Implement export button with validation-based enabling/disabling
     - Add form submission handling and API integration
-    - _Requirements: 1.3, 7.3_
+    - Add "Fill Sample Data" button with compliant test data
+    - _Requirements: 1.3, 7.3, 9.1, 9.2, 9.3_
 
   - [ ] 6.3 Write property test for validation error feedback
     - **Property 2: Validation error feedback completeness**
@@ -100,10 +101,10 @@ This implementation plan converts the Indexnine resume builder design into discr
     - **Validates: Requirements 2.7, 4.5, 7.3**
 
 - [ ] 7. Create HTML template and rendering system
-  - [ ] 7.1 Design Jinja2 HTML template matching DOCX layout
-    - Create resume.html template with company-approved styling
+  - [x] 7.1 Design Jinja2 HTML template with consistent PDF formatting
+    - Create resume.html template with professional styling
     - Implement section layouts for all resume sections
-    - Add CSS styling matching DOCX fonts, margins, and spacing
+    - Add CSS styling with proper fonts, margins, and spacing
     - _Requirements: 3.1, 3.4_
 
   - [ ] 7.2 Implement preview component with iframe
@@ -116,11 +117,11 @@ This implementation plan converts the Indexnine resume builder design into discr
     - **Property 8: Preview update consistency**
     - **Validates: Requirements 3.2, 3.5**
 
-- [ ] 8. Implement DOCX generation system
-  - [ ] 8.1 Create python-docx document generator
-    - Implement ResumeRenderer class with DOCX generation methods
-    - Add section rendering methods matching HTML template structure
-    - Apply company template styles, fonts, and formatting
+- [ ] 8. Implement PDF generation system
+  - [x] 8.1 Create ReportLab PDF document generator
+    - Implement ResumeRenderer class with PDF generation methods
+    - Add section rendering methods with professional formatting
+    - Apply proper styles, fonts, and layout using ReportLab
     - _Requirements: 4.1, 4.2_
 
   - [ ] 8.2 Add one-page constraint enforcement
@@ -128,7 +129,7 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Add warnings for content that may exceed page limits
     - _Requirements: 4.4_
 
-  - [ ] 8.3 Write property test for output format consistency
+  - [x] 8.3 Write property test for output format consistency
     - **Property 9: Output format consistency**
     - **Validates: Requirements 4.2, 8.3**
 
@@ -140,10 +141,10 @@ This implementation plan converts the Indexnine resume builder design into discr
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 10. Integration and pipeline validation
-  - [ ] 10.1 Wire frontend and backend components
+  - [x] 10.1 Wire frontend and backend components
     - Connect form submission to validation endpoint
     - Integrate preview generation with form state
-    - Connect export functionality to DOCX generation
+    - Connect export functionality to PDF generation
     - _Requirements: 8.1_
 
   - [ ] 10.2 Add error handling and user feedback
@@ -156,34 +157,50 @@ This implementation plan converts the Indexnine resume builder design into discr
     - **Property 11: Processing pipeline order**
     - **Validates: Requirements 8.1**
 
-- [ ] 11. Implement remaining validation properties
-  - [ ] 11.1 Write property test for skills format validation
+- [x] 11. Implement sample data functionality
+  - [x] 11.1 Create compliant sample data
+    - Design sample resume data that passes all validation rules
+    - Include proper date formats, word counts, and field requirements
+    - Ensure realistic professional content for demonstration
+    - _Requirements: 9.2, 9.3, 9.5_
+
+  - [x] 11.2 Add sample data prefill button
+    - Implement "Fill Sample Data" button in form interface
+    - Connect button to form reset functionality with sample data
+    - Enable immediate preview and export after sample data fill
+    - _Requirements: 9.1, 9.4_
+
+- [ ] 12. Implement remaining validation properties
+  - [ ] 12.1 Write property test for skills format validation
     - **Property 12: Skills format validation**
     - **Validates: Requirements 6.2**
 
-  - [ ] 11.2 Write property test for responsibilities format validation
+  - [ ] 12.2 Write property test for responsibilities format validation
     - **Property 13: Responsibilities format validation**
     - **Validates: Requirements 6.3**
 
-  - [ ] 11.3 Write property test for section optionality validation
+  - [ ] 12.3 Write property test for section optionality validation
     - **Property 14: Section optionality validation**
     - **Validates: Requirements 6.4**
 
-  - [ ] 11.4 Write property test for layout immutability
+  - [ ] 12.4 Write property test for layout immutability
     - **Property 15: Layout immutability**
     - **Validates: Requirements 1.3, 6.5, 8.5**
 
-- [ ] 12. Final integration testing and validation
-  - [ ] 12.1 Write integration tests for complete user workflows
+- [ ] 13. Final integration testing and validation
+  - [ ] 13.1 Write integration tests for complete user workflows
     - Test end-to-end resume creation, validation, preview, and export
     - Test error scenarios and recovery paths
-    - _Requirements: 8.1, 8.2, 8.3_
+    - Test sample data functionality and immediate export capability
+    - _Requirements: 8.1, 8.2, 8.3, 9.4_
 
-  - [ ] 12.2 Performance and usability testing
+  - [ ] 13.2 Performance and usability testing
     - Test real-time validation performance with large forms
     - Validate preview update responsiveness
-    - Test DOCX generation speed and memory usage
+    - Test PDF generation speed and memory usage
     - _Requirements: 3.2, 4.4_
+
+- [ ] 14. Final checkpoint - Complete system validation
 
 - [ ] 13. Final checkpoint - Complete system validation
   - Ensure all tests pass, ask the user if questions arise.
@@ -195,5 +212,5 @@ This implementation plan converts the Indexnine resume builder design into discr
 - Checkpoints ensure incremental validation at key integration points
 - Property tests validate universal correctness properties from design document
 - Unit tests validate specific examples and integration scenarios
-- Backend uses Python with FastAPI, Pydantic, Jinja2, python-docx
+- Backend uses Python with FastAPI, Pydantic, Jinja2, ReportLab
 - Frontend uses React, TypeScript, React Hook Form, Zod, Tailwind CSS
