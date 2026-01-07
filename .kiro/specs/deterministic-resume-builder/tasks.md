@@ -24,7 +24,7 @@ This implementation plan converts the Indexnine resume builder design into discr
     - **Property 4: Date format validation**
     - **Validates: Requirements 2.2**
 
-  - [ ] 2.3 Write property test for expertise summary validation
+  - [x] 2.3 Write property test for expertise summary validation
     - **Property 5: Expertise summary word count validation**
     - **Validates: Requirements 2.3**
 
