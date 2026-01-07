@@ -46,115 +46,68 @@
         }
         
         .section-header {
+            font-size: 11pt;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 11pt;
             margin-top: 12pt;
             margin-bottom: 6pt;
             border-bottom: 1px solid #000;
-            padding-bottom: 2pt;
         }
         
         .section-content {
             margin-bottom: 12pt;
         }
         
-        .experience-item, .project-item, .education-item, .award-item {
-            margin-bottom: 12pt;
-        }
-        
-        .item-header {
-            font-weight: bold;
-            margin-bottom: 2pt;
-        }
-        
-        .item-dates {
-            font-style: italic;
-            margin-bottom: 4pt;
-        }
-        
-        .responsibilities {
-            margin-left: 20pt;
-        }
-        
-        .responsibility {
-            margin-bottom: 2pt;
-        }
-        
-        .responsibility:before {
-            content: "• ";
-            margin-left: -12pt;
-        }
-        
-        .technologies {
-            font-style: italic;
-            margin-top: 4pt;
-        }
-        
         .placeholder {
-            color: #999;
+            color: #888;
             font-style: italic;
+            padding: 8pt;
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
         }
         
-        .partial-notice {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 4px;
+        .validation-error {
+            color: #d32f2f;
+            background-color: #ffebee;
             padding: 8pt;
+            border: 1px solid #f44336;
             margin-bottom: 12pt;
-            font-size: 10pt;
-            text-align: center;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="resume-container">
-        <div class="partial-notice">
-            📝 Live Preview - Updates as you type
-        </div>
-        
         <!-- Header Section -->
         <div class="header-section">
-            <div class="name">
-                {% if resume.header.name %}
-                    {{ resume.header.name }}
-                {% else %}
-                    <span class="placeholder">[Your Name]</span>
-                {% endif %}
-            </div>
-            <div class="title">
-                {% if resume.header.title %}
-                    {{ resume.header.title }}
-                {% else %}
-                    <span class="placeholder">[Professional Title]</span>
-                {% endif %}
-            </div>
+            {% if data.header %}
+            <div class="name">{{ data.header.name or 'Your name will appear here' }}</div>
+            <div class="title">{{ data.header.title or 'Your professional title will appear here' }}</div>
             <div class="contact-info">
-                {% if resume.header.email or resume.header.phone or resume.header.location %}
-                    {{ resume.header.email or '[email]' }} | 
-                    {{ resume.header.phone or '[phone]' }} | 
-                    {{ resume.header.location or '[location]' }}
-                {% else %}
-                    <span class="placeholder">[email] | [phone] | [location]</span>
-                {% endif %}
+                {{ data.header.email or 'your.email@example.com' }} | 
+                {{ data.header.phone or 'your phone number' }} | 
+                {{ data.header.location or 'your location' }}
             </div>
+            {% else %}
+            <div class="placeholder">Header information will appear here</div>
+            {% endif %}
         </div>
 
-        <!-- Expertise Summary Section -->
-        <div class="section-header">EXPERTISE SUMMARY</div>
+        <!-- Expertise Section -->
+        <div class="section-header">EXPERTISE</div>
         <div class="section-content">
-            {% if resume.expertise.summary %}
-                {{ resume.expertise.summary }}
+            {% if data.expertise and data.expertise.summary %}
+                {{ data.expertise.summary }}
             {% else %}
-                <span class="placeholder">Your professional summary will appear here (80-120 words required)</span>
+                <span class="placeholder">Your professional summary will appear here (80-120 words)</span>
             {% endif %}
         </div>
 
         <!-- Skills Section -->
         <div class="section-header">SKILLS</div>
         <div class="section-content">
-            {% if resume.skills.skills %}
-                {{ resume.skills.skills }}
+            {% if data.skills and data.skills.skills %}
+                {{ data.skills.skills }}
             {% else %}
                 <span class="placeholder">Your technical skills will appear here (comma-separated format)</span>
             {% endif %}
@@ -163,33 +116,19 @@
         <!-- Experience Section -->
         <div class="section-header">EXPERIENCE</div>
         <div class="section-content">
-            {% if resume.experience and resume.experience|length > 0 %}
-                {% for exp in resume.experience %}
-                    {% if exp.company or exp.position %}
-                        <div class="experience-item">
-                            <div class="item-header">
-                                {{ exp.company or '[Company]' }} - {{ exp.position or '[Position]' }}
-                            </div>
-                            <div class="item-dates">
-                                {{ exp.start_date or '[Start Date]' }} - {{ exp.end_date or '[End Date]' }}
-                            </div>
-                            {% if exp.responsibilities and exp.responsibilities|length > 0 %}
-                                <div class="responsibilities">
-                                    {% for responsibility in exp.responsibilities %}
-                                        {% if responsibility %}
-                                            <div class="responsibility">{{ responsibility }}</div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <div class="responsibilities">
-                                    <div class="responsibility placeholder">• [Responsibility 1]</div>
-                                    <div class="responsibility placeholder">• [Responsibility 2]</div>
-                                    <div class="responsibility placeholder">• [Responsibility 3]</div>
-                                </div>
-                            {% endif %}
-                        </div>
+            {% if data.experience and data.experience|length > 0 %}
+                {% for exp in data.experience %}
+                <div style="margin-bottom: 8pt;">
+                    <div style="font-weight: bold;">{{ exp.company or 'Company Name' }} - {{ exp.position or 'Position Title' }}</div>
+                    <div style="font-style: italic;">{{ exp.start_date or 'Start Date' }} - {{ exp.end_date or 'End Date' }}</div>
+                    {% if exp.responsibilities %}
+                        {% for resp in exp.responsibilities %}
+                        <div style="margin-left: 12pt;">• {{ resp }}</div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="placeholder" style="margin-left: 12pt;">Responsibilities will appear here (minimum 3 required)</div>
                     {% endif %}
+                </div>
                 {% endfor %}
             {% else %}
                 <div class="placeholder">Your work experience will appear here</div>
@@ -199,20 +138,14 @@
         <!-- Project Experience Section -->
         <div class="section-header">PROJECT EXPERIENCE</div>
         <div class="section-content">
-            {% if resume.projects and resume.projects|length > 0 %}
-                {% for project in resume.projects %}
-                    {% if project.name or project.description %}
-                        <div class="project-item">
-                            <div class="item-header">{{ project.name or '[Project Name]' }}</div>
-                            <div class="item-dates">
-                                {{ project.start_date or '[Start Date]' }} - {{ project.end_date or '[End Date]' }}
-                            </div>
-                            <div>{{ project.description or '[Project Description]' }}</div>
-                            <div class="technologies">
-                                Technologies: {{ project.technologies or '[Technologies Used]' }}
-                            </div>
-                        </div>
-                    {% endif %}
+            {% if data.projects and data.projects|length > 0 %}
+                {% for project in data.projects %}
+                <div style="margin-bottom: 8pt;">
+                    <div style="font-weight: bold;">{{ project.name or 'Project Name' }}</div>
+                    <div style="font-style: italic;">{{ project.start_date or 'Start Date' }} - {{ project.end_date or 'End Date' }}</div>
+                    <div>{{ project.description or 'Project description will appear here' }}</div>
+                    <div><strong>Technologies:</strong> {{ project.technologies or 'Technologies used' }}</div>
+                </div>
                 {% endfor %}
             {% else %}
                 <div class="placeholder">Your project experience will appear here</div>
@@ -222,20 +155,13 @@
         <!-- Education Section -->
         <div class="section-header">EDUCATION</div>
         <div class="section-content">
-            {% if resume.education and resume.education|length > 0 %}
-                {% for edu in resume.education %}
-                    {% if edu.institution or edu.degree %}
-                        <div class="education-item">
-                            <div class="item-header">
-                                {{ edu.institution or '[Institution]' }} - 
-                                {{ edu.degree or '[Degree]' }} in {{ edu.field_of_study or '[Field]' }}
-                            </div>
-                            <div class="item-dates">
-                                Graduated: {{ edu.graduation_date or '[Graduation Date]' }}
-                                {% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}
-                            </div>
-                        </div>
-                    {% endif %}
+            {% if data.education and data.education|length > 0 %}
+                {% for edu in data.education %}
+                <div style="margin-bottom: 8pt;">
+                    <div style="font-weight: bold;">{{ edu.institution or 'Institution Name' }} - {{ edu.degree or 'Degree' }}</div>
+                    <div>{{ edu.field_of_study or 'Field of Study' }}</div>
+                    <div style="font-style: italic;">Graduated: {{ edu.graduation_date or 'Graduation Date' }}{% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}</div>
+                </div>
                 {% endfor %}
             {% else %}
                 <div class="placeholder">Your education background will appear here</div>
@@ -243,23 +169,19 @@
         </div>
 
         <!-- Awards Section (Optional) -->
-        {% if resume.awards and resume.awards|length > 0 %}
-            <div class="section-header">AWARDS</div>
-            <div class="section-content">
-                {% for award in resume.awards %}
-                    {% if award.title or award.organization %}
-                        <div class="award-item">
-                            <div class="item-header">
-                                {{ award.title or '[Award Title]' }} - {{ award.organization or '[Organization]' }}
-                            </div>
-                            <div class="item-dates">{{ award.date or '[Date]' }}</div>
-                            {% if award.description %}
-                                <div>{{ award.description }}</div>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                {% endfor %}
+        {% if data.awards %}
+        <div class="section-header">AWARDS</div>
+        <div class="section-content">
+            {% for award in data.awards %}
+            <div style="margin-bottom: 8pt;">
+                <div style="font-weight: bold;">{{ award.title }} - {{ award.organization }}</div>
+                <div style="font-style: italic;">{{ award.date }}</div>
+                {% if award.description %}
+                <div>{{ award.description }}</div>
+                {% endif %}
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
     </div>
 </body>

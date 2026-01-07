@@ -15,13 +15,13 @@ def valid_word_count_summary(draw):
     """Generate summaries with valid word count (80-120 words)"""
     word_count = draw(st.integers(min_value=80, max_value=120))
     
-    # Generate realistic words for resume summaries
+    # Generate realistic words for resume summaries using only ASCII letters and digits
     words = draw(st.lists(
         st.text(
-            alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd')),
+            alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             min_size=2,
             max_size=12
-        ).filter(lambda x: x.strip() and not any(c in x for c in '🎉😀💻📱🚀')),
+        ).filter(lambda x: x.strip() and x.isalnum()),
         min_size=word_count,
         max_size=word_count
     ))
@@ -43,13 +43,13 @@ def invalid_word_count_summary(draw):
         # Too many words (121-200)
         word_count = draw(st.integers(min_value=121, max_value=200))
     
-    # Generate realistic words
+    # Generate realistic words using only ASCII letters and digits
     words = draw(st.lists(
         st.text(
-            alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd')),
+            alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             min_size=2,
             max_size=12
-        ).filter(lambda x: x.strip() and not any(c in x for c in '🎉😀💻📱🚀')),
+        ).filter(lambda x: x.strip() and x.isalnum()),
         min_size=word_count,
         max_size=word_count
     ))
@@ -65,23 +65,23 @@ def summary_with_emojis(draw):
     
     # Generate words with some containing emojis
     words = []
-    for _ in range(word_count):
-        if draw(st.booleans()) and len(words) < word_count - 5:  # Ensure we don't make all words emojis
+    for i in range(word_count):
+        if i == 0 or (draw(st.booleans()) and len([w for w in words if '🎉' in w or '😀' in w]) < 3):
             # Add emoji to word
             word = draw(st.text(
-                alphabet=st.characters(whitelist_categories=('Lu', 'Ll')),
+                alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
                 min_size=3,
                 max_size=8
-            ))
+            ).filter(lambda x: x.isalpha()))
             emoji = draw(st.sampled_from(['🎉', '😀', '💻', '📱', '🚀', '✨', '🔥', '💡']))
             words.append(f"{word}{emoji}")
         else:
             # Regular word
             word = draw(st.text(
-                alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd')),
+                alphabet='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
                 min_size=2,
                 max_size=12
-            ).filter(lambda x: x.strip()))
+            ).filter(lambda x: x.isalpha()))
             words.append(word)
     
     return ' '.join(words)

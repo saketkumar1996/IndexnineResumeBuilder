@@ -13,6 +13,8 @@
             margin: 0.5in;
             color: #000;
             background: white;
+            overflow-anchor: none;
+            scroll-behavior: auto;
         }
         
         .resume-container {
@@ -44,13 +46,12 @@
         }
         
         .section-header {
+            font-size: 11pt;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 11pt;
             margin-top: 12pt;
             margin-bottom: 6pt;
             border-bottom: 1px solid #000;
-            padding-bottom: 2pt;
         }
         
         .section-content {
@@ -58,7 +59,7 @@
         }
         
         .experience-item, .project-item, .education-item, .award-item {
-            margin-bottom: 12pt;
+            margin-bottom: 8pt;
         }
         
         .item-header {
@@ -72,7 +73,7 @@
         }
         
         .responsibilities {
-            margin-left: 20pt;
+            margin-left: 12pt;
         }
         
         .responsibility {
@@ -83,108 +84,86 @@
             content: "• ";
             margin-left: -12pt;
         }
-        
-        .technologies {
-            font-style: italic;
-            margin-top: 4pt;
-        }
-        
-        .error {
-            color: #d32f2f;
-            background: #ffebee;
-            padding: 12pt;
-            border: 1px solid #d32f2f;
-            border-radius: 4px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
     <div class="resume-container">
-        {% if resume %}
-            <!-- Header Section -->
-            <div class="header-section">
-                <div class="name">{{ resume.header.name }}</div>
-                <div class="title">{{ resume.header.title }}</div>
-                <div class="contact-info">
-                    {{ resume.header.email }} | {{ resume.header.phone }} | {{ resume.header.location }}
-                </div>
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="name">{{ resume.header.name }}</div>
+            <div class="title">{{ resume.header.title }}</div>
+            <div class="contact-info">
+                {{ resume.header.email }} | {{ resume.header.phone }} | {{ resume.header.location }}
             </div>
+        </div>
 
-            <!-- Expertise Summary Section -->
-            <div class="section-header">EXPERTISE SUMMARY</div>
-            <div class="section-content">
-                {{ resume.expertise.summary }}
-            </div>
+        <!-- Expertise Section -->
+        <div class="section-header">EXPERTISE</div>
+        <div class="section-content">
+            {{ resume.expertise.summary }}
+        </div>
 
-            <!-- Skills Section -->
-            <div class="section-header">SKILLS</div>
-            <div class="section-content">
-                {{ resume.skills.skills }}
-            </div>
+        <!-- Skills Section -->
+        <div class="section-header">SKILLS</div>
+        <div class="section-content">
+            {{ resume.skills.skills }}
+        </div>
 
-            <!-- Experience Section -->
-            <div class="section-header">EXPERIENCE</div>
-            <div class="section-content">
-                {% for exp in resume.experience %}
-                    <div class="experience-item">
-                        <div class="item-header">{{ exp.company }} - {{ exp.position }}</div>
-                        <div class="item-dates">{{ exp.start_date }} - {{ exp.end_date or 'Present' }}</div>
-                        <div class="responsibilities">
-                            {% for responsibility in exp.responsibilities %}
-                                <div class="responsibility">{{ responsibility }}</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <!-- Project Experience Section -->
-            <div class="section-header">PROJECT EXPERIENCE</div>
-            <div class="section-content">
-                {% for project in resume.projects %}
-                    <div class="project-item">
-                        <div class="item-header">{{ project.name }}</div>
-                        <div class="item-dates">{{ project.start_date }} - {{ project.end_date or 'Present' }}</div>
-                        <div>{{ project.description }}</div>
-                        <div class="technologies">Technologies: {{ project.technologies }}</div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <!-- Education Section -->
-            <div class="section-header">EDUCATION</div>
-            <div class="section-content">
-                {% for edu in resume.education %}
-                    <div class="education-item">
-                        <div class="item-header">{{ edu.institution }} - {{ edu.degree }} in {{ edu.field_of_study }}</div>
-                        <div class="item-dates">
-                            Graduated: {{ edu.graduation_date }}
-                            {% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <!-- Awards Section (Optional) -->
-            {% if resume.awards and resume.awards|length > 0 %}
-                <div class="section-header">AWARDS</div>
-                <div class="section-content">
-                    {% for award in resume.awards %}
-                        <div class="award-item">
-                            <div class="item-header">{{ award.title }} - {{ award.organization }}</div>
-                            <div class="item-dates">{{ award.date }}</div>
-                            {% if award.description %}
-                                <div>{{ award.description }}</div>
-                            {% endif %}
-                        </div>
+        <!-- Experience Section -->
+        <div class="section-header">EXPERIENCE</div>
+        <div class="section-content">
+            {% for exp in resume.experience %}
+            <div class="experience-item">
+                <div class="item-header">{{ exp.company }} - {{ exp.position }}</div>
+                <div class="item-dates">{{ exp.start_date }} - {{ exp.end_date or 'Present' }}</div>
+                <div class="responsibilities">
+                    {% for responsibility in exp.responsibilities %}
+                    <div class="responsibility">{{ responsibility }}</div>
                     {% endfor %}
                 </div>
-            {% endif %}
-        {% else %}
-            <div class="error">
-                No resume data provided for preview generation.
             </div>
+            {% endfor %}
+        </div>
+
+        <!-- Project Experience Section -->
+        <div class="section-header">PROJECT EXPERIENCE</div>
+        <div class="section-content">
+            {% for project in resume.projects %}
+            <div class="project-item">
+                <div class="item-header">{{ project.name }}</div>
+                <div class="item-dates">{{ project.start_date }} - {{ project.end_date or 'Present' }}</div>
+                <div>{{ project.description }}</div>
+                <div><strong>Technologies:</strong> {{ project.technologies }}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Education Section -->
+        <div class="section-header">EDUCATION</div>
+        <div class="section-content">
+            {% for edu in resume.education %}
+            <div class="education-item">
+                <div class="item-header">{{ edu.institution }} - {{ edu.degree }}</div>
+                <div>{{ edu.field_of_study }}</div>
+                <div class="item-dates">Graduated: {{ edu.graduation_date }}{% if edu.gpa %} | GPA: {{ edu.gpa }}{% endif %}</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Awards Section (Optional) -->
+        {% if resume.awards %}
+        <div class="section-header">AWARDS</div>
+        <div class="section-content">
+            {% for award in resume.awards %}
+            <div class="award-item">
+                <div class="item-header">{{ award.title }} - {{ award.organization }}</div>
+                <div class="item-dates">{{ award.date }}</div>
+                {% if award.description %}
+                <div>{{ award.description }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
         {% endif %}
     </div>
 </body>
