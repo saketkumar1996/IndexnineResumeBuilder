@@ -10,7 +10,7 @@ interface HeaderSectionProps {
 export const HeaderSection: React.FC<HeaderSectionProps> = ({ register, errors }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">HEADER</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-4">Personal Info</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
