@@ -6,105 +6,156 @@ interface ResumePreviewProps {
 }
 
 export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
-  const { header, expertise, skills, experiences, projects, education, awards = [] } = data;
+  const { header, expertise, skills, experiences, projects, education, awards } = data;
 
-  const hasContent = header.fullName || expertise.summary || skills.some(s => s.category);
+  const hasContent = header.fullName || expertise.summary || skills.skills;
+
+  // Green color matching the PDF: #2E9E5E (a professional green)
+  const greenColor = "#2E9E5E";
+  const grayColor = "#4A4A4A";
 
   return (
     <div 
-      className="bg-resume-paper resume-shadow rounded-sm origin-top"
+      className="bg-white shadow-lg origin-top"
       style={{
         width: `${8.5 * 96}px`,
         minHeight: `${11 * 96}px`,
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
-        fontFamily: "'Times New Roman', Georgia, serif",
+        fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
       }}
     >
       {!hasContent ? (
-        <div className="flex items-center justify-center h-full min-h-[600px] text-muted-foreground">
+        <div className="flex items-center justify-center h-full min-h-[600px] text-gray-400">
           <p className="text-center">
             Start filling out the form to see your resume preview
           </p>
         </div>
       ) : (
-        <div className="p-12 text-[11px] leading-relaxed text-foreground">
+        <div className="px-12 py-8 text-[11px] leading-relaxed" style={{ color: grayColor }}>
+          {/* Logo in top-right */}
+          <div className="flex justify-end mb-2">
+            <div className="flex items-center gap-1" style={{ color: greenColor }}>
+              <span className="text-lg font-bold">⊞</span>
+              <span className="text-sm font-bold tracking-wide">INDEXNINE</span>
+            </div>
+          </div>
+
           {/* Header */}
           {header.fullName && (
-            <div className="text-center mb-4 pb-3 border-b-2 border-section-divider">
-              <h1 className="text-2xl font-bold tracking-wide uppercase mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="mb-4">
+              <h1 className="text-4xl font-light tracking-wide mb-1" style={{ color: grayColor }}>
                 {header.fullName}
               </h1>
-              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
-                {header.email && <span>{header.email}</span>}
-                {header.phone && <span>• {header.phone}</span>}
-                {header.location && <span>• {header.location}</span>}
-              </div>
-              <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] mt-1">
-                {header.linkedin && (
-                  <span className="text-primary">LinkedIn</span>
-                )}
-                {header.github && (
-                  <span className="text-primary">GitHub</span>
-                )}
-                {header.portfolio && (
-                  <span className="text-primary">Portfolio</span>
-                )}
-              </div>
+              {header.designation && (
+                <p className="text-lg mb-3" style={{ color: greenColor }}>
+                  {header.designation}
+                </p>
+              )}
+              {/* Green bar separator */}
+              <div className="h-1.5 w-full mb-4" style={{ backgroundColor: greenColor }}></div>
             </div>
           )}
 
-          {/* Professional Summary */}
-          {expertise.summary && (
-            <section className="mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Professional Summary
+          {/* Expertise Section */}
+          {(expertise.summary || expertise.bulletPoints?.some(bp => bp)) && (
+            <section className="mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                EXPERTISE
               </h2>
-              <p className="text-justify">{expertise.summary}</p>
+              {expertise.summary && (
+                <p className="text-justify mb-2 text-[11px] leading-relaxed">{expertise.summary}</p>
+              )}
+              {expertise.bulletPoints && expertise.bulletPoints.filter(bp => bp).length > 0 && (
+                <ul className="list-disc list-outside ml-5 space-y-1.5">
+                  {expertise.bulletPoints.filter(bp => bp).map((point, index) => (
+                    <li key={index} className="text-[11px] leading-relaxed text-justify">{point}</li>
+                  ))}
+                </ul>
+              )}
             </section>
           )}
 
-          {/* Skills */}
-          {skills.some(s => s.category && s.skills) && (
-            <section className="mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Technical Skills
+          {/* Skills Section */}
+          {skills.skills && (
+            <section className="mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                SKILLS
               </h2>
-              <div className="space-y-1">
-                {skills.filter(s => s.category && s.skills).map((skill, index) => (
-                  <div key={index}>
-                    <span className="font-semibold">{skill.category}:</span> {skill.skills}
-                  </div>
-                ))}
-              </div>
+              <p className="text-[11px] leading-relaxed">{skills.skills}</p>
             </section>
           )}
 
-          {/* Experience */}
+          {/* Experience Section */}
           {experiences.length > 0 && experiences.some(e => e.company) && (
-            <section className="mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Professional Experience
+            <section className="mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                EXPERIENCE
               </h2>
               <div className="space-y-3">
                 {experiences.filter(e => e.company).map((exp, index) => (
                   <div key={index}>
-                    <div className="flex justify-between items-baseline">
+                    <div className="flex justify-between items-start mb-0.5">
                       <div>
-                        <span className="font-bold">{exp.company}</span>
-                        {exp.location && <span className="text-muted-foreground"> — {exp.location}</span>}
+                        <span className="font-bold text-[11px]">{exp.company}</span>
+                        {exp.location && <span>, {exp.location}</span>}
+                        <span className="italic text-gray-500"> - {exp.title}</span>
                       </div>
-                      <span className="text-[10px]">
-                        {exp.startDate} – {exp.endDate}
-                      </span>
                     </div>
-                    <div className="italic mb-1">{exp.title}</div>
-                    {exp.responsibilities?.length > 0 && (
-                      <ul className="list-disc list-outside ml-4 space-y-0.5">
-                        {exp.responsibilities.filter(r => r).map((resp, rIndex) => (
-                          <li key={rIndex}>{resp}</li>
-                        ))}
-                      </ul>
+                    <div className="text-[10px] text-gray-500">
+                      {exp.startDate} - {exp.endDate || "Present"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Project Experience Section */}
+          {projects.length > 0 && projects.some(p => p.name) && (
+            <section className="mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                PROJECT EXPERIENCE
+              </h2>
+              <div className="space-y-5">
+                {projects.filter(p => p.name).map((project, index) => (
+                  <div key={index}>
+                    <div className="mb-2">
+                      <span className="font-bold text-[12px]">{project.name}</span>
+                      {project.client && <span className="text-gray-500"> - {project.client}</span>}
+                    </div>
+                    
+                    <div className="mb-2 text-[10px]">
+                      <span className="font-bold">Technology Stack:</span> {project.technologies}
+                    </div>
+                    
+                    {project.description && (
+                      <div className="mb-2 text-[10px]">
+                        <span className="font-bold">Description:</span> {project.description}
+                      </div>
+                    )}
+                    
+                    {project.developmentTools && (
+                      <div className="mb-2 text-[10px]">
+                        <span className="font-bold">Development Tools:</span> {project.developmentTools}
+                      </div>
+                    )}
+                    
+                    {project.teamSize && (
+                      <div className="mb-2 text-[10px]">
+                        <span className="font-bold">Team Size:</span> {project.teamSize}
+                      </div>
+                    )}
+                    
+                    {project.responsibilities && project.responsibilities.filter(r => r).length > 0 && (
+                      <div className="mt-2">
+                        <p className="font-bold text-[10px] mb-1" style={{ color: greenColor }}>Responsibility:</p>
+                        <ul className="list-disc list-outside ml-5 space-y-1">
+                          {project.responsibilities.filter(r => r).map((resp, rIndex) => (
+                            <li key={rIndex} className="text-[10px] leading-relaxed">{resp}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -112,74 +163,42 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
             </section>
           )}
 
-          {/* Projects */}
-          {projects.length > 0 && projects.some(p => p.name) && (
-            <section className="mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Projects
-              </h2>
-              <div className="space-y-2">
-                {projects.filter(p => p.name).map((project, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-baseline">
-                      <span className="font-bold">{project.name}</span>
-                      {project.technologies && (
-                        <span className="text-[10px] italic">{project.technologies}</span>
-                      )}
-                    </div>
-                    <p className="text-justify">{project.description}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Education */}
+          {/* Education Section */}
           {education.some(e => e.institution) && (
-            <section className="mb-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Education
+            <section className="mb-5">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                EDUCATION
               </h2>
               <div className="space-y-2">
                 {education.filter(e => e.institution).map((edu, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-baseline">
+                  <div key={index} className="flex justify-between items-baseline">
+                    <div>
                       <span className="font-bold">{edu.institution}</span>
-                      <span className="text-[10px]">{edu.graduationDate}</span>
+                      <span> - {edu.degree}</span>
                     </div>
-                    <div className="flex justify-between items-baseline">
-                      <span className="italic">{edu.degree}</span>
-                      {edu.gpa && <span className="text-[10px]">GPA: {edu.gpa}</span>}
-                    </div>
-                    {edu.honors && (
-                      <div className="text-[10px] text-muted-foreground">{edu.honors}</div>
-                    )}
+                    <span className="text-[10px]">
+                      {edu.startYear} - {edu.endYear}
+                    </span>
                   </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* Awards */}
+          {/* Awards Section */}
           {awards.length > 0 && awards.some(a => a.title) && (
             <section>
-              <h2 className="text-xs font-bold uppercase tracking-wider border-b border-border pb-1 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                Awards & Certifications
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
+                AWARDS
               </h2>
-              <div className="space-y-1">
+              <ul className="list-disc list-outside ml-5 space-y-1">
                 {awards.filter(a => a.title).map((award, index) => (
-                  <div key={index} className="flex justify-between items-baseline">
-                    <div>
-                      <span className="font-bold">{award.title}</span>
-                      <span className="text-muted-foreground"> — {award.issuer}</span>
-                      {award.description && (
-                        <span className="text-[10px] block ml-2">{award.description}</span>
-                      )}
-                    </div>
-                    <span className="text-[10px]">{award.date}</span>
-                  </div>
+                  <li key={index} className="text-[11px]">
+                    {award.title}
+                    {award.year && <span> ({award.year})</span>}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
         </div>
