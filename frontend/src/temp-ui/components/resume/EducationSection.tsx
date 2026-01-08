@@ -33,7 +33,7 @@ export const EducationSection = ({ form }: EducationSectionProps) => {
               <span className="text-sm font-medium text-muted-foreground">
                 Education {index + 1}
               </span>
-              {fields.length > 1 && (
+              {fields.length > 0 && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -54,7 +54,7 @@ export const EducationSection = ({ form }: EducationSectionProps) => {
                 onChange={(value) => setValue(`education.${index}.institution`, value, { shouldValidate: true })}
                 error={errors.education?.[index]?.institution?.message}
                 required
-                placeholder="University of California, Berkeley"
+                placeholder="University of California"
               />
               <TextInput
                 label="Degree"
@@ -62,11 +62,11 @@ export const EducationSection = ({ form }: EducationSectionProps) => {
                 onChange={(value) => setValue(`education.${index}.degree`, value, { shouldValidate: true })}
                 error={errors.education?.[index]?.degree?.message}
                 required
-                placeholder="Bachelor of Science in Computer Science"
+                placeholder="Bachelor of Science"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextInput
                 label="Location"
                 value={education[index]?.location || ""}
@@ -75,44 +75,62 @@ export const EducationSection = ({ form }: EducationSectionProps) => {
                 required
                 placeholder="Berkeley, CA"
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <TextInput
-                label="Graduation Date"
-                value={education[index]?.graduationDate || ""}
-                onChange={(value) => setValue(`education.${index}.graduationDate`, value, { shouldValidate: true })}
-                error={errors.education?.[index]?.graduationDate?.message}
-                required
-                placeholder="MM/YYYY"
+                label="Start Year"
+                value={education[index]?.startYear || ""}
+                onChange={(value) => setValue(`education.${index}.startYear`, value, { shouldValidate: true })}
+                error={errors.education?.[index]?.startYear?.message}
+                placeholder="2011"
               />
               <TextInput
-                label="GPA"
+                label="End Year"
+                value={education[index]?.endYear || ""}
+                onChange={(value) => setValue(`education.${index}.endYear`, value, { shouldValidate: true })}
+                error={errors.education?.[index]?.endYear?.message}
+                required
+                placeholder="2016"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="GPA (Optional)"
                 value={education[index]?.gpa || ""}
                 onChange={(value) => setValue(`education.${index}.gpa`, value, { shouldValidate: true })}
                 error={errors.education?.[index]?.gpa?.message}
                 placeholder="3.8/4.0"
               />
+              <TextInput
+                label="Honors (Optional)"
+                value={education[index]?.honors || ""}
+                onChange={(value) => setValue(`education.${index}.honors`, value, { shouldValidate: true })}
+                error={errors.education?.[index]?.honors?.message}
+                placeholder="Magna Cum Laude, Dean's List"
+              />
             </div>
-
-            <TextInput
-              label="Honors & Awards"
-              value={education[index]?.honors || ""}
-              onChange={(value) => setValue(`education.${index}.honors`, value, { shouldValidate: true })}
-              error={errors.education?.[index]?.honors?.message}
-              placeholder="Magna Cum Laude, Dean's List, Phi Beta Kappa"
-            />
           </motion.div>
         ))}
       </AnimatePresence>
 
-      {fields.length < 3 && (
+      {fields.length < 5 && (
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ institution: "", degree: "", location: "", graduationDate: "", gpa: "", honors: "" })}
+          onClick={() => append({ institution: "", degree: "", location: "", startYear: "", endYear: "", gpa: "", honors: "" })}
           className="w-full"
         >
           <Plus size={16} className="mr-2" />
           Add Education
         </Button>
+      )}
+
+      {fields.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-4">
+          No education added yet. Click the button above to add your educational background.
+        </p>
       )}
     </div>
   );

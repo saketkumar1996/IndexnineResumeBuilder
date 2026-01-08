@@ -11,141 +11,168 @@ import { ResumeData } from "@/types/resume";
 
 // Register fonts
 Font.register({
-  family: "Times-Roman",
-  src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/times-new-roman@1.0.4/Times%20New%20Roman.ttf",
+  family: "Helvetica",
+  fonts: [
+    { src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/arial@1.0.4/Arial.ttf" },
+    { src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/arial-bold@1.0.4/Arial%20Bold.ttf", fontWeight: "bold" },
+    { src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/arial-italic@1.0.4/Arial%20Italic.ttf", fontStyle: "italic" },
+  ],
 });
 
-Font.register({
-  family: "Times-Bold",
-  src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/times-new-roman-bold@1.0.4/Times%20New%20Roman%20Bold.ttf",
-});
-
-Font.register({
-  family: "Times-Italic",
-  src: "https://cdn.jsdelivr.net/npm/@canvas-fonts/times-new-roman-italic@1.0.4/Times%20New%20Roman%20Italic.ttf",
-});
+const greenColor = "#2E9E5E";
+const grayColor = "#4A4A4A";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 48,
+    paddingHorizontal: 48,
+    paddingVertical: 32,
     fontSize: 10,
-    fontFamily: "Times-Roman",
+    fontFamily: "Helvetica",
     lineHeight: 1.4,
+    color: grayColor,
+  },
+  logoContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 8,
+  },
+  logoText: {
+    fontSize: 11,
+    fontWeight: "bold",
+    color: greenColor,
+    letterSpacing: 1,
   },
   header: {
-    textAlign: "center",
     marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: "#1e3a5f",
   },
   name: {
-    fontSize: 22,
-    fontFamily: "Times-Bold",
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    marginBottom: 6,
+    fontSize: 28,
+    fontWeight: "normal",
+    color: grayColor,
+    marginBottom: 4,
+    letterSpacing: 1,
   },
-  contactRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    fontSize: 9,
-    gap: 4,
+  designation: {
+    fontSize: 14,
+    color: greenColor,
+    marginBottom: 10,
   },
-  contactItem: {
-    marginHorizontal: 4,
+  greenBar: {
+    height: 5,
+    backgroundColor: greenColor,
+    marginBottom: 16,
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 14,
   },
   sectionTitle: {
     fontSize: 11,
-    fontFamily: "Times-Bold",
+    fontWeight: "bold",
+    color: greenColor,
     textTransform: "uppercase",
     letterSpacing: 1,
-    borderBottomWidth: 1,
-    borderBottomColor: "#cccccc",
-    paddingBottom: 2,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   paragraph: {
     textAlign: "justify",
-  },
-  skillRow: {
-    flexDirection: "row",
-    marginBottom: 2,
-  },
-  skillCategory: {
-    fontFamily: "Times-Bold",
-  },
-  experienceHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  companyName: {
-    fontFamily: "Times-Bold",
-  },
-  dateRange: {
-    fontSize: 9,
-  },
-  jobTitle: {
-    fontFamily: "Times-Italic",
-    marginBottom: 4,
+    marginBottom: 6,
+    fontSize: 10,
+    lineHeight: 1.5,
   },
   bulletList: {
     marginLeft: 12,
   },
   bulletItem: {
     flexDirection: "row",
-    marginBottom: 2,
+    marginBottom: 4,
   },
   bullet: {
     width: 10,
+    fontSize: 10,
   },
   bulletText: {
     flex: 1,
+    fontSize: 10,
+    lineHeight: 1.5,
   },
-  projectHeader: {
+  skillRow: {
+    marginBottom: 3,
+    fontSize: 10,
+    lineHeight: 1.5,
+  },
+  skillCategory: {
+    fontWeight: "bold",
+  },
+  experienceEntry: {
+    marginBottom: 8,
+  },
+  experienceHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 2,
+  },
+  companyInfo: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  companyName: {
+    fontWeight: "bold",
+    fontSize: 10,
+  },
+  location: {
+    fontSize: 10,
+  },
+  jobTitle: {
+    fontStyle: "italic",
+    color: "#666666",
+    fontSize: 10,
+  },
+  dateRange: {
+    fontSize: 9,
+    color: "#666666",
+  },
+  projectEntry: {
+    marginBottom: 12,
   },
   projectName: {
-    fontFamily: "Times-Bold",
+    fontWeight: "bold",
+    fontSize: 11,
+    marginBottom: 4,
   },
-  technologies: {
+  projectClient: {
+    color: "#666666",
+    fontSize: 10,
+  },
+  projectDetail: {
     fontSize: 9,
-    fontFamily: "Times-Italic",
+    marginBottom: 3,
+    lineHeight: 1.4,
+  },
+  projectDetailLabel: {
+    fontWeight: "bold",
+  },
+  responsibilityTitle: {
+    fontWeight: "bold",
+    color: greenColor,
+    fontSize: 9,
+    marginTop: 4,
+    marginBottom: 4,
   },
   educationEntry: {
-    marginBottom: 6,
-  },
-  educationHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 4,
   },
   institution: {
-    fontFamily: "Times-Bold",
+    fontWeight: "bold",
+    fontSize: 10,
   },
   degree: {
-    fontFamily: "Times-Italic",
+    fontSize: 10,
   },
-  honors: {
-    fontSize: 9,
-    color: "#666666",
-  },
-  awardEntry: {
+  awardItem: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  awardTitle: {
-    fontFamily: "Times-Bold",
-  },
-  awardIssuer: {
-    color: "#666666",
+    marginBottom: 3,
   },
 });
 
@@ -159,82 +186,115 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
   return (
     <Document>
       <Page size="LETTER" style={styles.page}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>⊞ INDEXNINE</Text>
+        </View>
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.name}>{header.fullName}</Text>
-          <View style={styles.contactRow}>
-            {header.email && <Text style={styles.contactItem}>{header.email}</Text>}
-            {header.phone && <Text style={styles.contactItem}>• {header.phone}</Text>}
-            {header.location && <Text style={styles.contactItem}>• {header.location}</Text>}
-          </View>
-          <View style={styles.contactRow}>
-            {header.linkedin && <Text style={styles.contactItem}>LinkedIn</Text>}
-            {header.github && <Text style={styles.contactItem}>GitHub</Text>}
-            {header.portfolio && <Text style={styles.contactItem}>Portfolio</Text>}
-          </View>
+          {header.designation && (
+            <Text style={styles.designation}>{header.designation}</Text>
+          )}
+          <View style={styles.greenBar} />
         </View>
 
-        {/* Professional Summary */}
-        {expertise.summary && (
+        {/* Expertise */}
+        {(expertise.summary || expertise.bulletPoints?.some(bp => bp)) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Professional Summary</Text>
-            <Text style={styles.paragraph}>{expertise.summary}</Text>
+            <Text style={styles.sectionTitle}>EXPERTISE</Text>
+            {expertise.summary && (
+              <Text style={styles.paragraph}>{expertise.summary}</Text>
+            )}
+            {expertise.bulletPoints && expertise.bulletPoints.filter(bp => bp).length > 0 && (
+              <View style={styles.bulletList}>
+                {expertise.bulletPoints.filter(bp => bp).map((point, index) => (
+                  <View key={index} style={styles.bulletItem}>
+                    <Text style={styles.bullet}>•</Text>
+                    <Text style={styles.bulletText}>{point}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
         {/* Skills */}
-        {skills.some(s => s.category && s.skills) && (
+        {skills.skills && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Technical Skills</Text>
-            {skills.filter(s => s.category && s.skills).map((skill, index) => (
-              <View key={index} style={styles.skillRow}>
-                <Text style={styles.skillCategory}>{skill.category}: </Text>
-                <Text>{skill.skills}</Text>
-              </View>
-            ))}
+            <Text style={styles.sectionTitle}>SKILLS</Text>
+            <Text style={styles.skillRow}>{skills.skills}</Text>
           </View>
         )}
 
         {/* Experience */}
         {experiences.length > 0 && experiences.some(e => e.company) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Professional Experience</Text>
+            <Text style={styles.sectionTitle}>EXPERIENCE</Text>
             {experiences.filter(e => e.company).map((exp, index) => (
-              <View key={index} style={{ marginBottom: 8 }}>
-                <View style={styles.experienceHeader}>
-                  <Text>
-                    <Text style={styles.companyName}>{exp.company}</Text>
-                    {exp.location && <Text> — {exp.location}</Text>}
-                  </Text>
-                  <Text style={styles.dateRange}>{exp.startDate} – {exp.endDate}</Text>
+              <View key={index} style={styles.experienceEntry}>
+                <View style={styles.companyInfo}>
+                  <Text style={styles.companyName}>{exp.company}</Text>
+                  {exp.location && <Text style={styles.location}>, {exp.location}</Text>}
+                  <Text style={styles.jobTitle}> - {exp.title}</Text>
                 </View>
-                <Text style={styles.jobTitle}>{exp.title}</Text>
-                <View style={styles.bulletList}>
-                  {exp.responsibilities?.filter(r => r).map((resp, rIndex) => (
-                    <View key={rIndex} style={styles.bulletItem}>
-                      <Text style={styles.bullet}>•</Text>
-                      <Text style={styles.bulletText}>{resp}</Text>
-                    </View>
-                  ))}
-                </View>
+                <Text style={styles.dateRange}>{exp.startDate} - {exp.endDate || "Present"}</Text>
               </View>
             ))}
           </View>
         )}
 
-        {/* Projects */}
+        {/* Project Experience */}
         {projects.length > 0 && projects.some(p => p.name) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Projects</Text>
+            <Text style={styles.sectionTitle}>PROJECT EXPERIENCE</Text>
             {projects.filter(p => p.name).map((project, index) => (
-              <View key={index} style={{ marginBottom: 6 }}>
-                <View style={styles.projectHeader}>
+              <View key={index} style={styles.projectEntry}>
+                <Text>
                   <Text style={styles.projectName}>{project.name}</Text>
-                  {project.technologies && (
-                    <Text style={styles.technologies}>{project.technologies}</Text>
-                  )}
-                </View>
-                <Text style={styles.paragraph}>{project.description}</Text>
+                  {project.client && <Text style={styles.projectClient}> - {project.client}</Text>}
+                </Text>
+                
+                <Text style={styles.projectDetail}>
+                  <Text style={styles.projectDetailLabel}>Technology Stack: </Text>
+                  {project.technologies}
+                </Text>
+                
+                {project.description && (
+                  <Text style={styles.projectDetail}>
+                    <Text style={styles.projectDetailLabel}>Description: </Text>
+                    {project.description}
+                  </Text>
+                )}
+                
+                {project.developmentTools && (
+                  <Text style={styles.projectDetail}>
+                    <Text style={styles.projectDetailLabel}>Development Tools: </Text>
+                    {project.developmentTools}
+                  </Text>
+                )}
+                
+                {project.teamSize && (
+                  <Text style={styles.projectDetail}>
+                    <Text style={styles.projectDetailLabel}>Team Size: </Text>
+                    {project.teamSize}
+                  </Text>
+                )}
+                
+                {project.responsibilities && project.responsibilities.filter(r => r).length > 0 && (
+                  <View>
+                    <Text style={styles.responsibilityTitle}>Responsibility:</Text>
+                    <View style={styles.bulletList}>
+                      {project.responsibilities.filter(r => r).map((resp, rIndex) => (
+                        <View key={rIndex} style={styles.bulletItem}>
+                          <Text style={styles.bullet}>•</Text>
+                          <Text style={styles.bulletText}>{resp}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -243,18 +303,16 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
         {/* Education */}
         {education.some(e => e.institution) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Education</Text>
+            <Text style={styles.sectionTitle}>EDUCATION</Text>
             {education.filter(e => e.institution).map((edu, index) => (
               <View key={index} style={styles.educationEntry}>
-                <View style={styles.educationHeader}>
+                <Text>
                   <Text style={styles.institution}>{edu.institution}</Text>
-                  <Text style={styles.dateRange}>{edu.graduationDate}</Text>
-                </View>
-                <View style={styles.educationHeader}>
-                  <Text style={styles.degree}>{edu.degree}</Text>
-                  {edu.gpa && <Text style={styles.dateRange}>GPA: {edu.gpa}</Text>}
-                </View>
-                {edu.honors && <Text style={styles.honors}>{edu.honors}</Text>}
+                  <Text style={styles.degree}> - {edu.degree}</Text>
+                </Text>
+                <Text style={styles.dateRange}>
+                  {edu.startYear} - {edu.endYear}
+                </Text>
               </View>
             ))}
           </View>
@@ -263,16 +321,18 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
         {/* Awards */}
         {awards.length > 0 && awards.some(a => a.title) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Awards & Certifications</Text>
-            {awards.filter(a => a.title).map((award, index) => (
-              <View key={index} style={styles.awardEntry}>
-                <Text>
-                  <Text style={styles.awardTitle}>{award.title}</Text>
-                  <Text style={styles.awardIssuer}> — {award.issuer}</Text>
-                </Text>
-                <Text style={styles.dateRange}>{award.date}</Text>
-              </View>
-            ))}
+            <Text style={styles.sectionTitle}>AWARDS</Text>
+            <View style={styles.bulletList}>
+              {awards.filter(a => a.title).map((award, index) => (
+                <View key={index} style={styles.awardItem}>
+                  <Text style={styles.bullet}>•</Text>
+                  <Text style={styles.bulletText}>
+                    {award.title}
+                    {award.year && ` (${award.year})`}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
       </Page>

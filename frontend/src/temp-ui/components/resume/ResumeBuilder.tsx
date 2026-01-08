@@ -17,6 +17,76 @@ import { ResumePreview } from "./ResumePreview";
 import { Button } from "@/temp-ui/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+// Helper function to check if all required data is filled
+const isAllDataFilled = (data: ResumeData): boolean => {
+  // Check header - required fields: fullName, designation, email, phone, location
+  if (!data.header?.fullName?.trim() || 
+      !data.header?.designation?.trim() ||
+      !data.header?.email?.trim() || 
+      !data.header?.phone?.trim() || 
+      !data.header?.location?.trim()) {
+    return false;
+  }
+
+  // Check expertise - required: summary (must be 80-120 words)
+  if (!data.expertise?.summary?.trim()) {
+    return false;
+  }
+  const wordCount = data.expertise.summary.split(/\s+/).filter(word => word.length > 0).length;
+  if (wordCount < 80 || wordCount > 120) {
+    return false;
+  }
+
+  // Check skills - must have skills string
+  if (!data.skills?.skills?.trim()) {
+    return false;
+  }
+
+  // Check experiences - at least one experience with all required fields
+  if (!data.experiences || data.experiences.length === 0) {
+    return false;
+  }
+  const hasValidExperience = data.experiences.some(exp => {
+    return exp.company?.trim() && 
+           exp.title?.trim() && 
+           exp.location?.trim() && 
+           exp.startDate?.trim();
+  });
+  if (!hasValidExperience) {
+    return false;
+  }
+
+  // Check projects - at least one project with name, description, technologies
+  if (!data.projects || data.projects.length === 0) {
+    return false;
+  }
+  const hasValidProject = data.projects.some(proj => 
+    proj.name?.trim() && 
+    proj.description?.trim() && 
+    proj.technologies?.trim()
+  );
+  if (!hasValidProject) {
+    return false;
+  }
+
+  // Check education - at least one education entry with required fields
+  if (!data.education || data.education.length === 0) {
+    return false;
+  }
+  const hasValidEducation = data.education.some(edu => 
+    edu.institution?.trim() && 
+    edu.degree?.trim() && 
+    edu.location?.trim() && 
+    edu.startYear?.trim() &&
+    edu.endYear?.trim()
+  );
+  if (!hasValidEducation) {
+    return false;
+  }
+
+  return true;
+};
+
 export const ResumeBuilder = () => {
   const { toast } = useToast();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -143,15 +213,20 @@ export const ResumeBuilder = () => {
     return count + (sectionErrors ? 1 : 0);
   }, 0);
 
+  // Check if all required data is filled (not just validation passing)
+  const allDataFilled = isAllDataFilled(watchedData);
+  const readyToExport = isValid && allDataFilled;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            {/* <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <FileText className="w-5 h-5 text-primary-foreground" />
-            </div>
+            </div> */}
+            
             <div>
               <h1 className="font-serif text-xl font-bold text-foreground">Indexnine</h1>
               <p className="text-xs text-muted-foreground">Professional Resume Builder</p>
@@ -165,7 +240,7 @@ export const ResumeBuilder = () => {
                 <span>{errorCount} {errorCount === 1 ? "error" : "errors"}</span>
               </div>
             )}
-            {isValid && (
+            {readyToExport && (
               <div className="hidden sm:flex items-center gap-2 text-success text-sm">
                 <CheckCircle size={16} />
                 <span>Ready to export</span>
@@ -182,8 +257,12 @@ export const ResumeBuilder = () => {
             </Button>
             <Button
               onClick={handleExport}
-              disabled={isExporting}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={!readyToExport || isExporting}
+              className={`${
+                readyToExport && !isExporting
+                  ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              }`}
             >
               <Download size={16} className="mr-2" />
               {isExporting ? "Exporting..." : "Export PDF"}

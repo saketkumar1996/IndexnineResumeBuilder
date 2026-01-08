@@ -45,51 +45,35 @@ export const AwardsSection = ({ form }: AwardsSectionProps) => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-3">
+                <TextInput
+                  label="Award Title"
+                  value={awards[index]?.title || ""}
+                  onChange={(value) => setValue(`awards.${index}.title`, value, { shouldValidate: true })}
+                  error={errors.awards?.[index]?.title?.message}
+                  required
+                  placeholder="Secured first Rank at college level Web Page Design Competition"
+                />
+              </div>
               <TextInput
-                label="Award Title"
-                value={awards[index]?.title || ""}
-                onChange={(value) => setValue(`awards.${index}.title`, value, { shouldValidate: true })}
-                error={errors.awards?.[index]?.title?.message}
+                label="Year"
+                value={awards[index]?.year || ""}
+                onChange={(value) => setValue(`awards.${index}.year`, value, { shouldValidate: true })}
+                error={errors.awards?.[index]?.year?.message}
                 required
-                placeholder="Engineering Excellence Award"
-              />
-              <TextInput
-                label="Issuer"
-                value={awards[index]?.issuer || ""}
-                onChange={(value) => setValue(`awards.${index}.issuer`, value, { shouldValidate: true })}
-                error={errors.awards?.[index]?.issuer?.message}
-                required
-                placeholder="TechCorp Inc."
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextInput
-                label="Date"
-                value={awards[index]?.date || ""}
-                onChange={(value) => setValue(`awards.${index}.date`, value, { shouldValidate: true })}
-                error={errors.awards?.[index]?.date?.message}
-                required
-                placeholder="MM/YYYY"
-              />
-              <TextInput
-                label="Description"
-                value={awards[index]?.description || ""}
-                onChange={(value) => setValue(`awards.${index}.description`, value, { shouldValidate: true })}
-                error={errors.awards?.[index]?.description?.message}
-                placeholder="Brief description of the achievement"
+                placeholder="2016"
               />
             </div>
           </motion.div>
         ))}
       </AnimatePresence>
 
-      {fields.length < 5 && (
+      {fields.length < 10 && (
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ title: "", issuer: "", date: "", description: "" })}
+          onClick={() => append({ title: "", year: "" })}
           className="w-full"
         >
           <Plus size={16} className="mr-2" />
@@ -99,7 +83,7 @@ export const AwardsSection = ({ form }: AwardsSectionProps) => {
 
       {fields.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-4">
-          No awards added yet. Highlight your recognitions and certifications here.
+          No awards added yet. Highlight your recognitions and achievements here.
         </p>
       )}
     </div>

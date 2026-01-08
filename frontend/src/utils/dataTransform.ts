@@ -102,11 +102,8 @@ function convertDateFormatToFrontend(date: string): string {
 
 // Transform frontend data to backend format
 export function transformToBackend(frontendData: ResumeData): BackendResumeModel {
-  // Combine skills categories into a single comma-separated string
-  const skillsString = frontendData.skills
-    .filter(skill => skill.category && skill.skills)
-    .map(skill => skill.skills)
-    .join(', ');
+  // Skills is now a single string
+  const skillsString = frontendData.skills?.skills || 'Skill 1, Skill 2, Skill 3, Skill 4, Skill 5';
 
   // Extract job title from the first experience or use a default
   const jobTitle = frontendData.experiences.length > 0 && frontendData.experiences[0].title
@@ -120,39 +117,34 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
         .map(exp => ({
           company: exp.company,
           position: exp.title,
-          start_date: convertDateFormat(exp.startDate) || 'JAN 2020',
-          end_date: exp.endDate && exp.endDate !== 'Present' ? convertDateFormat(exp.endDate) : exp.endDate || 'Present',
-          responsibilities: exp.responsibilities.filter(r => r && r.trim()).length >= 3 
-            ? exp.responsibilities.filter(r => r && r.trim())
-            : [
-                'Contributed to team projects and initiatives',
-                'Collaborated with cross-functional teams',
-                'Maintained high standards of work quality'
-              ],
+          start_date: exp.startDate || 'JAN 2020',
+          end_date: exp.endDate || 'Present',
+          responsibilities: [], // Responsibilities are now in projects
         }))
     : [{
         company: 'Company Name',
         position: 'Position Title',
         start_date: 'JAN 2020',
         end_date: 'Present',
-        responsibilities: [
-          'Contributed to team projects and initiatives',
-          'Collaborated with cross-functional teams',
-          'Maintained high standards of work quality'
-        ],
+        responsibilities: [],
       }];
 
   // Ensure we have at least one education entry
   const education = frontendData.education.length > 0 && frontendData.education[0].institution
     ? frontendData.education
         .filter(edu => edu.institution && edu.degree) // Only include education with required fields
-        .map(edu => ({
-          institution: edu.institution,
-          degree: edu.degree,
-          field_of_study: edu.degree, // Use degree as field of study since we don't have separate field
-          graduation_date: convertDateFormat(edu.graduationDate) || 'MAY 2020',
-          gpa: edu.gpa || undefined,
-        }))
+        .map(edu => {
+          // Convert year range to graduation date (use end year as graduation)
+          const graduationYear = edu.endYear || '2020';
+          const graduationDate = `MAY ${graduationYear}`;
+          return {
+            institution: edu.institution,
+            degree: edu.degree,
+            field_of_study: edu.degree, // Use degree as field of study since we don't have separate field
+            graduation_date: graduationDate,
+            gpa: edu.gpa || undefined,
+          };
+        })
     : [{
         institution: 'University Name',
         degree: 'Bachelor of Science',
@@ -183,7 +175,7 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
   return {
     header: {
       name: frontendData.header.fullName || 'Your Name',
-      title: jobTitle,
+      title: frontendData.header.designation || jobTitle,
       email: frontendData.header.email || 'your.email@example.com',
       phone: frontendData.header.phone || '+1 (555) 123-4567',
       location: frontendData.header.location || 'City, State',
@@ -197,25 +189,26 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
     experience: experiences,
     projects: projects,
     education: education,
-    awards: frontendData.awards?.filter(award => award.title && award.issuer).map(award => ({
+    awards: frontendData.awards?.filter(award => award.title && award.year).map(award => ({
       title: award.title,
-      organization: award.issuer,
-      date: convertDateFormat(award.date) || 'JAN 2023',
-      description: award.description,
+      organization: '', // Awards don't have issuer in new schema
+      date: `JAN ${award.year}` || 'JAN 2023',
+      description: '',
     })) || [],
   };
 }
 
 // Transform backend data to frontend format (for loading existing data)
 export function transformToFrontend(backendData: BackendResumeModel): ResumeData {
-  // Split skills string into categories (simplified approach)
-  const skillsArray = backendData.skills.skills
-    ? [{ category: 'Technical Skills', skills: backendData.skills.skills }]
-    : [{ category: '', skills: '' }];
+  // Skills is now a single string
+  const skillsData = {
+    skills: backendData.skills.skills || ''
+  };
 
   return {
     header: {
       fullName: backendData.header.name,
+      designation: backendData.header.title || '',
       email: backendData.header.email,
       phone: backendData.header.phone,
       location: backendData.header.location,
@@ -225,15 +218,15 @@ export function transformToFrontend(backendData: BackendResumeModel): ResumeData
     },
     expertise: {
       summary: backendData.expertise.summary,
+      bulletPoints: [],
     },
-    skills: skillsArray,
+    skills: skillsData,
     experiences: backendData.experience.map(exp => ({
       company: exp.company,
       title: exp.position,
       location: '', // Backend doesn't have location for experiences
-      startDate: convertDateFormatToFrontend(exp.start_date),
-      endDate: exp.end_date ? convertDateFormatToFrontend(exp.end_date) : '',
-      responsibilities: exp.responsibilities,
+      startDate: exp.start_date || '',
+      endDate: exp.end_date || '',
     })),
     projects: backendData.projects.map(proj => ({
       name: proj.name,
@@ -241,19 +234,26 @@ export function transformToFrontend(backendData: BackendResumeModel): ResumeData
       technologies: proj.technologies,
       link: '',
     })),
-    education: backendData.education.map(edu => ({
-      institution: edu.institution,
-      degree: edu.degree,
-      location: '', // Backend doesn't have location for education
-      graduationDate: convertDateFormatToFrontend(edu.graduation_date),
-      gpa: edu.gpa || '',
-      honors: '',
-    })),
-    awards: backendData.awards?.map(award => ({
-      title: award.title,
-      issuer: award.organization,
-      date: convertDateFormatToFrontend(award.date),
-      description: award.description,
-    })) || [],
+    education: backendData.education.map(edu => {
+      // Extract year from graduation date (format: MMM YYYY)
+      const graduationYear = edu.graduation_date.match(/\d{4}/)?.[0] || '';
+      return {
+        institution: edu.institution,
+        degree: edu.degree,
+        location: '', // Backend doesn't have location for education
+        startYear: graduationYear ? String(parseInt(graduationYear) - 4) : '',
+        endYear: graduationYear || '',
+        gpa: edu.gpa || '',
+        honors: '',
+      };
+    }),
+    awards: backendData.awards?.map(award => {
+      // Extract year from date (format: MMM YYYY)
+      const year = award.date.match(/\d{4}/)?.[0] || '';
+      return {
+        title: award.title,
+        year: year || '',
+      };
+    }) || [],
   };
 }

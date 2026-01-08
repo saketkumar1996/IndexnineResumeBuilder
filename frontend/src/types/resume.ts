@@ -6,6 +6,7 @@
 
 export interface HeaderData {
   fullName: string;
+  designation: string;
   email: string;
   phone: string;
   location: string;
@@ -16,10 +17,10 @@ export interface HeaderData {
 
 export interface ExpertiseData {
   summary: string;
+  bulletPoints?: string[];
 }
 
 export interface SkillsData {
-  category: string;
   skills: string;
 }
 
@@ -29,7 +30,6 @@ export interface ExperienceData {
   location: string;
   startDate: string;
   endDate?: string;
-  responsibilities: string[];
 }
 
 export interface ProjectData {
@@ -43,22 +43,21 @@ export interface EducationData {
   institution: string;
   degree: string;
   location: string;
-  graduationDate: string;
+  startYear: string;
+  endYear: string;
   gpa?: string;
   honors?: string;
 }
 
 export interface AwardData {
   title: string;
-  issuer: string;
-  date: string;
-  description?: string;
+  year: string;
 }
 
 export interface ResumeData {
   header: HeaderData;
   expertise: ExpertiseData;
-  skills: SkillsData[];
+  skills: SkillsData;
   experiences: ExperienceData[];
   projects: ProjectData[];
   education: EducationData[];
@@ -69,6 +68,7 @@ export interface ResumeData {
 export const defaultResumeData: ResumeData = {
   header: {
     fullName: "",
+    designation: "",
     email: "",
     phone: "",
     location: "",
@@ -78,13 +78,11 @@ export const defaultResumeData: ResumeData = {
   },
   expertise: {
     summary: "",
+    bulletPoints: [],
   },
-  skills: [
-    {
-      category: "",
-      skills: "",
-    },
-  ],
+  skills: {
+    skills: "",
+  },
   experiences: [
     {
       company: "",
@@ -92,7 +90,6 @@ export const defaultResumeData: ResumeData = {
       location: "",
       startDate: "",
       endDate: "",
-      responsibilities: [""],
     },
   ],
   projects: [
@@ -108,7 +105,8 @@ export const defaultResumeData: ResumeData = {
       institution: "",
       degree: "",
       location: "",
-      graduationDate: "",
+      startYear: "",
+      endYear: "",
       gpa: "",
       honors: "",
     },
@@ -119,68 +117,121 @@ export const defaultResumeData: ResumeData = {
 // Sample data that complies with all validation rules
 export const sampleResumeData: ResumeData = {
   header: {
-    fullName: "John Smith",
-    email: "john.smith@email.com",
+    fullName: "FirstName Second Name",
+    designation: "Sr. Consultant - Software Engineer",
+    email: "firstname.secondname@email.com",
     phone: "+1 (555) 123-4567",
-    location: "San Francisco, CA",
-    linkedin: "https://linkedin.com/in/johnsmith",
-    github: "https://github.com/johnsmith",
-    portfolio: "https://johnsmith.dev",
+    location: "Pune, Maharashtra",
+    linkedin: "https://linkedin.com/in/firstname-secondname",
+    github: "https://github.com/firstname-secondname",
+    portfolio: "https://firstname-secondname.dev",
   },
   expertise: {
-    summary: "Experienced software engineer with over 8 years of expertise in full-stack development, cloud architecture, and team leadership. Proven track record of delivering scalable web applications using modern technologies including React, Node.js, Python, and AWS services. Strong background in agile methodologies, code review processes, and mentoring junior developers. Passionate about building high-performance systems that solve complex business problems while maintaining clean, maintainable code. Experienced in leading cross-functional teams and driving technical decisions that align with business objectives and industry best practices.",
+    summary: "6+ years of experience in designing, developing, modifying, debugging, and maintaining software code according to functional, non-functional, and technical design specifications. Skilled in investigating and troubleshooting issues by reviewing and debugging code, providing fixes and workarounds, and ensuring operability for maintaining existing software solutions. Worked across various domains viz. Security, Education, Fintech, Security and Travel. Good communication and interpersonal skills, accustomed to working in a team environment and capable of working efficiently under pressure.",
+    bulletPoints: [
+      "Skilled in investigating and troubleshooting issues by reviewing and debugging code, providing fixes and workarounds, and ensuring operability for maintaining existing software solutions.",
+      "Worked across various domains viz. Security, Education, Fintech, Security and Travel.",
+      "Good communication and interpersonal skills, accustomed to working in a team environment and capable of working efficiently under pressure.",
+    ],
   },
-  skills: [
-    {
-      category: "Programming Languages",
-      skills: "JavaScript, TypeScript, Python, Go, Java",
-    },
-    {
-      category: "Frontend Technologies",
-      skills: "React, Vue.js, HTML5, CSS3, Tailwind CSS",
-    },
-    {
-      category: "Backend Technologies",
-      skills: "Node.js, FastAPI, Express.js, PostgreSQL, MongoDB",
-    },
-    {
-      category: "Cloud & DevOps",
-      skills: "AWS, Docker, Kubernetes, CI/CD, Git",
-    },
-  ],
+  skills: {
+    skills: "Angular (9,10,12,14,17), JavaScript, TypeScript, React.js, NestJs, HTML-CSS, Bootstrap, CoreUI, NgRx, Jest, Karma, Jasmine, REST API Integration, Postman, Swagger, Git, SVN, Bitbucket, Eclipse, Visual Studio Code, Jira, Confluence, Figma",
+  },
   experiences: [
     {
-      company: "Tech Solutions Inc",
-      title: "Senior Software Engineer",
-      location: "San Francisco, CA",
-      startDate: "01/2020",
+      company: "Indexnine Technologies Pvt. Ltd.",
+      title: "Sr. Consultant - Senior Software Engineer",
+      location: "Pune",
+      startDate: "Apr 2024",
       endDate: "Present",
-      responsibilities: [
-        "Led development of microservices architecture serving 1M+ daily active users",
-        "Implemented CI/CD pipelines reducing deployment time by 75% and improving reliability",
-        "Mentored 5 junior developers and conducted code reviews to maintain high code quality standards",
-      ],
+    },
+    {
+      company: "Indexnine Technologies Pvt. Ltd.",
+      title: "Consultant - Senior Software Engineer",
+      location: "Pune",
+      startDate: "Apr 2023",
+      endDate: "Mar 2024",
+    },
+    {
+      company: "Indexnine Technologies Pvt. Ltd.",
+      title: "Software Engineer",
+      location: "Pune",
+      startDate: "Jan 2021",
+      endDate: "Mar 2023",
     },
   ],
   projects: [
     {
-      name: "E-commerce Platform Redesign",
-      description: "Complete redesign of legacy e-commerce platform using modern React and Node.js stack",
-      technologies: "React, Node.js, PostgreSQL, AWS, Docker",
-      link: "https://github.com/johnsmith/ecommerce-platform",
+      name: "Entreda, Smarsh",
+      client: "Compliance Solution",
+      description: "Smarsh Cyber Compliance is a cybersecurity and compliance risk management platform. It helps organizations monitor, remediate, and report on cyber risks in real time.",
+      technologies: "Angular 14, 17, TypeScript, Java, Postgres",
+      developmentTools: "Visual studio code, Git, Postman, Jira, Confluence",
+      teamSize: "40",
+      responsibilities: [
+        "As an Angular developer, was responsible for developing new features, working on enhancements in existing features, and fixing bugs.",
+        "Integrated libraries like CoreUI and AG-Grid to enhance UI, enabling advanced data table functionalities such as sorting, filtering, and pagination.",
+        "Responsible for migration from Angular v14 to v17 without breaking code and functionality.",
+        "I implemented NgRx for state management, caching API responses in the store to minimize redundant API calls and improve application performance.",
+        "Implemented unit tests using Jest to ensure reliable functionality and improve code coverage.",
+        "Followed the Agile methodology and participated in sprint planning, backlog grooming and retrospective.",
+        "Used confluence for documentation of features and API contract discussion.",
+      ],
+    },
+    {
+      name: "Gyan AI",
+      client: "",
+      description: "Auto-curating Research Engine: Gyan's platform is designed to be self-organizing, providing unbiased and fully explainable analyses without hallucinations or inconsistencies.",
+      technologies: "Angular 12, TypeScript, HTML, SCSS, MySQL, Java",
+      developmentTools: "Visual studio code, Git, Postman, Figma, SonarQube",
+      teamSize: "10",
+      responsibilities: [
+        "As a senior frontend developer, my role involves collaborating with the team to design and develop user-friendly UI components using Angular and implementing functionalities.",
+        "Additionally, I contribute to requirement analysis, feature development, bug fixing, and ensuring seamless integration between frontend and backend components.",
+        "Actively involved in feature discussion with customers as senior developer in the team.",
+        "Integrated D3.js to visualize and create interactive graphical representations of data, enhancing data insights and user experience.",
+        "Enhanced user experience by implementing lazy loading to minimize the initial bundle size and improve route-based module loading.",
+        "Used SonarQube to monitor and improve code quality, ensuring high maintainability and security compliance across the codebase.",
+      ],
+    },
+    {
+      name: "MySpot Redesign, Book Engine",
+      client: "",
+      description: "MySpot collects all parking related information with location. The parking managers use it as an admin portal. Data for parking locations can be accessed by parking vendors.",
+      technologies: "Angular 10, TypeScript, HTML, SCSS, MySQL, Java",
+      developmentTools: "Visual studio code, Git, Postman",
+      teamSize: "11",
+      responsibilities: [
+        "Collaborate with designers and other stakeholders to understand the requirements and objectives for the redesign project.",
+        "Worked on creation of angular components and angular tasks.",
+        "Conduct a thorough analysis of the existing application and its user interface to identify areas for improvement and optimization.",
+        "Integrated Google Calendar API/library to enable calendar functionalities within the application.",
+        "Improved API handling by using Angular resolvers to load data in advance of component rendering.",
+        "Design and implement new user interface designs that are visually appealing, intuitive, and optimized for user engagement and satisfaction.",
+      ],
     },
   ],
   education: [
     {
-      institution: "University of California",
-      degree: "Bachelor of Science in Computer Science",
-      location: "Berkeley, CA",
-      graduationDate: "05/2016",
-      gpa: "3.8/4.0",
-      honors: "Magna Cum Laude, Dean's List",
+      institution: "DBNCOET (Amravati University)",
+      degree: "B.E. (Information Technology)",
+      location: "Amravati, Maharashtra",
+      startYear: "2011",
+      endYear: "2016",
+      gpa: "",
+      honors: "",
     },
   ],
-  awards: [],
+  awards: [
+    {
+      title: "Secured first Rank at college level Web Page Design Competition",
+      year: "2016",
+    },
+    {
+      title: "Third prize in Hackathon (TECHNOFEST) in college",
+      year: "2015",
+    },
+  ],
 };
 
 // API Response Types
