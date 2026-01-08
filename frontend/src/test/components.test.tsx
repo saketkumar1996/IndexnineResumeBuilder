@@ -6,33 +6,33 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ResumeForm } from '../components/ResumeForm';
+import { ResumeBuilder } from '../temp-ui/components/resume/ResumeBuilder';
 
 // Mock fetch for API calls
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-describe('ResumeForm Component', () => {
+describe('ResumeBuilder Component', () => {
   beforeEach(() => {
     mockFetch.mockClear();
   });
 
   it('should render all form sections', () => {
-    render(<ResumeForm />);
+    render(<ResumeBuilder />);
     
     // Check for main sections
-    expect(screen.getByText(/header/i)).toBeInTheDocument();
-    expect(screen.getByText(/expertise/i)).toBeInTheDocument();
-    expect(screen.getByText(/skills/i)).toBeInTheDocument();
-    expect(screen.getByText(/experience/i)).toBeInTheDocument();
-    expect(screen.getByText(/projects/i)).toBeInTheDocument();
-    expect(screen.getByText(/education/i)).toBeInTheDocument();
-    expect(screen.getByText(/awards/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contact Information/i)).toBeInTheDocument();
+    expect(screen.getByText(/Professional Summary/i)).toBeInTheDocument();
+    expect(screen.getByText(/Technical Skills/i)).toBeInTheDocument();
+    expect(screen.getByText(/Work Experience/i)).toBeInTheDocument();
+    expect(screen.getByText(/Projects/i)).toBeInTheDocument();
+    expect(screen.getByText(/Education/i)).toBeInTheDocument();
+    expect(screen.getByText(/Awards/i)).toBeInTheDocument();
   });
 
   it('should show validation errors for invalid email', async () => {
     const user = userEvent.setup();
-    render(<ResumeForm />);
+    render(<ResumeBuilder />);
     
     const emailInput = screen.getByLabelText(/email/i);
     await user.type(emailInput, 'invalid-email');

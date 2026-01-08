@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { fc } from 'fast-check';
+import * as fc from 'fast-check';
 import {
   HeaderSchema,
   ExpertiseSchema,
@@ -66,14 +66,12 @@ describe('Header Schema Validation', () => {
   it('should accept valid header data', () => {
     fc.assert(fc.property(
       cleanText,
-      cleanText,
       validEmail,
       validPhone,
       cleanText,
-      (name, title, email, phone, location) => {
+      (fullName, email, phone, location) => {
         const result = HeaderSchema.safeParse({
-          name: name.slice(0, 100),
-          title: title.slice(0, 150),
+          fullName: fullName.slice(0, 100),
           email,
           phone,
           location: location.slice(0, 100)
@@ -88,8 +86,7 @@ describe('Header Schema Validation', () => {
       textWithEmojis,
       (emojiText) => {
         const result = HeaderSchema.safeParse({
-          name: emojiText,
-          title: 'Software Engineer',
+          fullName: emojiText,
           email: 'test@example.com',
           phone: '+1 555-123-4567',
           location: 'San Francisco, CA'
@@ -111,8 +108,7 @@ describe('Header Schema Validation', () => {
     
     invalidEmails.forEach(email => {
       const result = HeaderSchema.safeParse({
-        name: 'John Doe',
-        title: 'Software Engineer',
+        fullName: 'John Doe',
         email,
         phone: '+1 555-123-4567',
         location: 'San Francisco, CA'
@@ -126,8 +122,7 @@ describe('Header Schema Validation', () => {
     
     invalidPhones.forEach(phone => {
       const result = HeaderSchema.safeParse({
-        name: 'John Doe',
-        title: 'Software Engineer',
+        fullName: 'John Doe',
         email: 'test@example.com',
         phone,
         location: 'San Francisco, CA'
@@ -211,9 +206,13 @@ describe('Expertise Schema Validation', () => {
 describe('Skills Schema Validation', () => {
   it('should accept valid comma-separated skills', () => {
     fc.assert(fc.property(
+      cleanText,
       validCommaSeparatedSkills,
-      (skills) => {
-        const result = SkillsSchema.safeParse({ skills });
+      (category, skills) => {
+        const result = SkillsSchema.safeParse({ 
+          category: category.slice(0, 50),
+          skills 
+        });
         expect(result.success).toBe(true);
       }
     ));
@@ -250,15 +249,17 @@ describe('Experience Schema Validation', () => {
     fc.assert(fc.property(
       cleanText,
       cleanText,
-      validDateFormat,
-      validEndDate,
+      cleanText,
+      fc.stringMatching(/^\d{2}\/\d{4}$/),
+      fc.oneof(fc.stringMatching(/^\d{2}\/\d{4}$/), fc.constant('Present')),
       validResponsibilities,
-      (company, position, startDate, endDate, responsibilities) => {
+      (company, title, location, startDate, endDate, responsibilities) => {
         const result = ExperienceSchema.safeParse({
           company: company.slice(0, 100),
-          position: position.slice(0, 100),
-          start_date: startDate,
-          end_date: endDate,
+          title: title.slice(0, 100),
+          location: location.slice(0, 100),
+          startDate,
+          endDate,
           responsibilities
         });
         expect(result.success).toBe(true);
@@ -292,9 +293,10 @@ describe('Experience Schema Validation', () => {
     invalidDates.forEach(date => {
       const result = ExperienceSchema.safeParse({
         company: 'Tech Corp',
-        position: 'Developer',
-        start_date: date,
-        end_date: 'Present',
+        title: 'Developer',
+        location: 'San Francisco, CA',
+        startDate: date,
+        endDate: 'Present',
         responsibilities: ['Task 1', 'Task 2', 'Task 3']
       });
       expect(result.success).toBe(false);
@@ -302,22 +304,24 @@ describe('Experience Schema Validation', () => {
   });
 
   it('should accept Present as end date but not start date', () => {
-    // Present should be valid for end_date
+    // Present should be valid for endDate
     const validResult = ExperienceSchema.safeParse({
       company: 'Tech Corp',
-      position: 'Developer',
-      start_date: 'JAN 2020',
-      end_date: 'Present',
+      title: 'Developer',
+      location: 'San Francisco, CA',
+      startDate: '01/2020',
+      endDate: 'Present',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     });
     expect(validResult.success).toBe(true);
 
-    // Present should be invalid for start_date
+    // Present should be invalid for startDate
     const invalidResult = ExperienceSchema.safeParse({
       company: 'Tech Corp',
-      position: 'Developer',
-      start_date: 'Present',
-      end_date: 'DEC 2020',
+      title: 'Developer',
+      location: 'San Francisco, CA',
+      startDate: 'Present',
+      endDate: '12/2020',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     });
     expect(invalidResult.success).toBe(false);
@@ -330,15 +334,12 @@ describe('Project Schema Validation', () => {
       cleanText,
       cleanText,
       cleanText,
-      validDateFormat,
-      validEndDate,
-      (name, description, technologies, startDate, endDate) => {
+      (name, description, technologies) => {
         const result = ProjectSchema.safeParse({
           name: name.slice(0, 100),
           description: description.slice(0, 500),
           technologies,
-          start_date: startDate,
-          end_date: endDate
+          link: 'https://example.com'
         });
         expect(result.success).toBe(true);
       }
@@ -353,8 +354,7 @@ describe('Project Schema Validation', () => {
           name: emojiText,
           description: 'A great project',
           technologies: 'Python, React',
-          start_date: 'JAN 2020',
-          end_date: 'DEC 2020'
+          link: 'https://example.com'
         });
         expect(result.success).toBe(false);
       }
@@ -368,15 +368,17 @@ describe('Education Schema Validation', () => {
       cleanText,
       cleanText,
       cleanText,
-      validDateFormat,
+      fc.stringMatching(/^\d{2}\/\d{4}$/),
       fc.option(cleanText.filter(s => s.length <= 10)),
-      (institution, degree, fieldOfStudy, graduationDate, gpa) => {
+      fc.option(cleanText.filter(s => s.length <= 100)),
+      (institution, degree, location, graduationDate, gpa, honors) => {
         const result = EducationSchema.safeParse({
           institution: institution.slice(0, 100),
           degree: degree.slice(0, 100),
-          field_of_study: fieldOfStudy.slice(0, 100),
-          graduation_date: graduationDate,
-          gpa: gpa?.slice(0, 10)
+          location: location.slice(0, 100),
+          graduationDate,
+          gpa: gpa?.slice(0, 10),
+          honors: honors?.slice(0, 100)
         });
         expect(result.success).toBe(true);
       }
@@ -390,8 +392,8 @@ describe('Education Schema Validation', () => {
         const result = EducationSchema.safeParse({
           institution: emojiText,
           degree: 'Bachelor of Science',
-          field_of_study: 'Computer Science',
-          graduation_date: 'MAY 2020',
+          location: 'Berkeley, CA',
+          graduationDate: '05/2020',
           gpa: '3.8'
         });
         expect(result.success).toBe(false);
@@ -405,12 +407,12 @@ describe('Award Schema Validation', () => {
     fc.assert(fc.property(
       cleanText,
       cleanText,
-      validDateFormat,
+      fc.stringMatching(/^\d{2}\/\d{4}$/),
       fc.option(cleanText.filter(s => s.length <= 200)),
-      (title, organization, date, description) => {
+      (title, issuer, date, description) => {
         const result = AwardSchema.safeParse({
           title: title.slice(0, 100),
-          organization: organization.slice(0, 100),
+          issuer: issuer.slice(0, 100),
           date,
           description: description?.slice(0, 200)
         });
@@ -425,8 +427,8 @@ describe('Award Schema Validation', () => {
       (emojiText) => {
         const result = AwardSchema.safeParse({
           title: emojiText,
-          organization: 'Tech Awards',
-          date: 'DEC 2020',
+          issuer: 'Tech Awards',
+          date: '12/2020',
           description: 'Great achievement'
         });
         expect(result.success).toBe(false);
@@ -438,8 +440,7 @@ describe('Award Schema Validation', () => {
 describe('Complete Resume Schema Validation', () => {
   const validCompleteResume = {
     header: {
-      name: 'John Doe',
-      title: 'Software Engineer',
+      fullName: 'John Doe',
       email: 'john@example.com',
       phone: '+1 555-123-4567',
       location: 'San Francisco, CA'
@@ -447,28 +448,29 @@ describe('Complete Resume Schema Validation', () => {
     expertise: {
       summary: Array(90).fill('word').join(' ')
     },
-    skills: {
+    skills: [{
+      category: 'Programming',
       skills: 'Python, JavaScript, React, Node.js'
-    },
-    experience: [{
+    }],
+    experiences: [{
       company: 'Tech Corp',
-      position: 'Developer',
-      start_date: 'JAN 2020',
-      end_date: 'Present',
+      title: 'Developer',
+      location: 'San Francisco, CA',
+      startDate: '01/2020',
+      endDate: 'Present',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     }],
     projects: [{
       name: 'Great Project',
       description: 'A wonderful project',
       technologies: 'Python, React',
-      start_date: 'JAN 2020',
-      end_date: 'DEC 2020'
+      link: 'https://example.com'
     }],
     education: [{
       institution: 'University',
       degree: 'Bachelor',
-      field_of_study: 'Computer Science',
-      graduation_date: 'MAY 2020'
+      location: 'Berkeley, CA',
+      graduationDate: '05/2020'
     }],
     awards: []
   };
@@ -483,7 +485,7 @@ describe('Complete Resume Schema Validation', () => {
       header: validCompleteResume.header,
       expertise: validCompleteResume.expertise,
       skills: validCompleteResume.skills
-      // Missing experience, projects, education
+      // Missing experiences, projects, education
     };
 
     const result = ResumeSchema.safeParse(incompleteResume);
