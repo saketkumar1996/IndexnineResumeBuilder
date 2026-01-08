@@ -410,3 +410,83 @@ The system requires both unit testing and property-based testing for comprehensi
 - Both test types are required for deployment approval
 
 The combination of unit and property-based testing ensures both concrete correctness (unit tests) and universal correctness guarantees (property tests) across the entire system.
+
+## UI Refactor Design
+
+### Migration Strategy
+
+The UI refactor migrates the existing functional components in `src/components/` to the new visual design found in `src/temp-ui/` while preserving all existing functionality, state management, and API integration.
+
+### Component Mapping
+
+**Existing → New Component Mapping:**
+- `src/components/ResumeForm.tsx` → `src/temp-ui/components/resume/ResumeBuilder.tsx`
+- Individual section components → `src/temp-ui/components/resume/*Section.tsx`
+- Form controls → `src/temp-ui/components/resume/FormField.tsx`
+- Preview component → `src/temp-ui/components/resume/ResumePreview.tsx`
+
+### Preserved Functionality
+
+**State Management:**
+- React Hook Form integration with identical form structure
+- Zod validation resolvers with same validation schemas
+- Real-time validation feedback and error state management
+- Form data watching and controlled input behavior
+
+**API Integration:**
+- Identical backend API calls for validation, preview, and export
+- Same error handling and response processing
+- Preserved network request patterns and data transformation
+
+**User Experience Features:**
+- "Fill Sample Data" functionality with same sample data
+- Export PDF functionality with identical file generation
+- Section collapsing/expanding behavior
+- Real-time preview updates
+- Validation error display and field highlighting
+
+### New Visual Design Elements
+
+**Enhanced UI Components:**
+- Modern card-based section layout with improved visual hierarchy
+- Collapsible sections with smooth animations using Framer Motion
+- Improved form field styling with better error state visualization
+- Professional header with branding and status indicators
+- Responsive design with optimized mobile and desktop layouts
+
+**Design System Integration:**
+- Consistent color scheme using CSS custom properties
+- Typography improvements with serif fonts for headings
+- Enhanced spacing and layout using Tailwind CSS utilities
+- Improved accessibility with proper ARIA labels and keyboard navigation
+
+### Implementation Approach
+
+**Phase 1: Component Structure Migration**
+- Replace existing components with new visual components
+- Maintain identical props interfaces and component APIs
+- Preserve all existing React Hook Form integration
+
+**Phase 2: Functionality Preservation**
+- Ensure all validation logic remains identical
+- Maintain same API integration patterns
+- Preserve error handling and user feedback mechanisms
+
+**Phase 3: Testing Compatibility**
+- Ensure all existing tests continue to pass
+- Maintain same component behavior for test assertions
+- Preserve accessibility and user interaction patterns
+
+### Technical Requirements
+
+**Functional Compatibility:**
+- All existing unit tests must pass without modification
+- Property-based tests must continue to validate same behaviors
+- API integration tests must maintain same request/response patterns
+- Form validation must produce identical results
+
+**Visual Enhancement:**
+- Improved user experience with modern design patterns
+- Better responsive behavior across device sizes
+- Enhanced accessibility with improved focus management
+- Professional appearance suitable for enterprise use
