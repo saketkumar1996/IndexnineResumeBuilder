@@ -50,6 +50,12 @@ export const HeaderSchema = z.object({
       message: 'Name cannot contain emojis, icons, or graphics'
     }),
   
+  designation: z.string()
+    .min(1, 'Designation is required')
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Designation cannot contain emojis, icons, or graphics'
+    }),
+  
   email: z.string()
     .refine(val => !val || /^[^@]+@[^@]+\.[^@]+$/.test(val), {
       message: 'Invalid email format'
@@ -92,16 +98,16 @@ export const ExpertiseSchema = z.object({
     })
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Summary cannot contain emojis, icons, or graphics'
+    }),
+  bulletPoints: z.array(z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Bullet points cannot contain emojis, icons, or graphics'
     })
+  ).optional()
 });
 
 // Skills Schema
 export const SkillsSchema = z.object({
-  category: z.string()
-    .refine(val => !val || !EMOJI_PATTERN.test(val), {
-      message: 'Category cannot contain emojis, icons, or graphics'
-    }),
-  
   skills: z.string()
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Skills cannot contain emojis, icons, or graphics'
@@ -126,20 +132,15 @@ export const ExperienceSchema = z.object({
     }),
   
   startDate: z.string()
-    .refine(val => !val || /^\d{2}\/\d{4}$/.test(val), {
-      message: 'Start date must be in MM/YYYY format'
+    .refine(val => !val || /^[A-Za-z]{3} \d{4}$/.test(val), {
+      message: 'Start date must be in MMM YYYY format (e.g., Apr 2024)'
     }),
   
   endDate: z.string()
-    .refine(val => !val || /^\d{2}\/\d{4}$|^Present$/.test(val), {
-      message: 'End date must be in MM/YYYY format or "Present"'
+    .refine(val => !val || /^[A-Za-z]{3} \d{4}$|^Present$/.test(val), {
+      message: 'End date must be in MMM YYYY format (e.g., Apr 2024) or "Present"'
     })
-    .optional(),
-  
-  responsibilities: z.array(z.string())
-    .refine(validateMinResponsibilities, {
-      message: 'Invalid responsibilities format'
-    })
+    .optional()
 });
 
 // Project Schema
@@ -183,9 +184,14 @@ export const EducationSchema = z.object({
       message: 'Location cannot contain emojis, icons, or graphics'
     }),
   
-  graduationDate: z.string()
-    .refine(val => !val || /^\d{2}\/\d{4}$/.test(val), {
-      message: 'Graduation date must be in MM/YYYY format'
+  startYear: z.string()
+    .refine(val => !val || /^\d{4}$/.test(val), {
+      message: 'Start year must be in YYYY format'
+    }),
+  
+  endYear: z.string()
+    .refine(val => !val || /^\d{4}$/.test(val), {
+      message: 'End year must be in YYYY format'
     }),
   
   gpa: z.string()
@@ -193,7 +199,7 @@ export const EducationSchema = z.object({
       message: 'GPA cannot contain emojis, icons, or graphics'
     })
     .optional(),
-
+  
   honors: z.string()
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Honors cannot contain emojis, icons, or graphics'
@@ -208,28 +214,17 @@ export const AwardSchema = z.object({
       message: 'Award title cannot contain emojis, icons, or graphics'
     }),
   
-  issuer: z.string()
-    .refine(val => !val || !EMOJI_PATTERN.test(val), {
-      message: 'Issuer cannot contain emojis, icons, or graphics'
-    }),
-  
-  date: z.string()
-    .refine(val => !val || /^\d{2}\/\d{4}$/.test(val), {
-      message: 'Award date must be in MM/YYYY format'
-    }),
-  
-  description: z.string()
-    .refine(val => !val || !EMOJI_PATTERN.test(val), {
-      message: 'Description cannot contain emojis, icons, or graphics'
+  year: z.string()
+    .refine(val => !val || /^\d{4}$/.test(val), {
+      message: 'Year must be in YYYY format'
     })
-    .optional()
 });
 
 // Complete Resume Schema
 export const ResumeSchema = z.object({
   header: HeaderSchema,
   expertise: ExpertiseSchema,
-  skills: z.array(SkillsSchema),
+  skills: SkillsSchema,
   experiences: z.array(ExperienceSchema),
   projects: z.array(ProjectSchema),
   education: z.array(EducationSchema),
