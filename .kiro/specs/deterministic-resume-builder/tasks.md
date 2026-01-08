@@ -20,11 +20,11 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Implement ResumeModel as complete data structure with section validation
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 6.2, 6.3, 6.4_
 
-  - [x] 2.2 Write property test for date format validation
+  - [ ] 2.2 Write property test for date format validation
     - **Property 4: Date format validation**
     - **Validates: Requirements 2.2**
 
-  - [x] 2.3 Write property test for expertise summary validation
+  - [ ] 2.3 Write property test for expertise summary validation
     - **Property 5: Expertise summary word count validation**
     - **Validates: Requirements 2.3**
 
@@ -129,7 +129,7 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Add warnings for content that may exceed page limits
     - _Requirements: 4.4_
 
-  - [x] 8.3 Write property test for output format consistency
+  - [ ] 8.3 Write property test for output format consistency
     - **Property 9: Output format consistency**
     - **Validates: Requirements 4.2, 8.3**
 
@@ -200,7 +200,47 @@ This implementation plan converts the Indexnine resume builder design into discr
     - Test PDF generation speed and memory usage
     - _Requirements: 3.2, 4.4_
 
-- [ ] 14. Final checkpoint - Complete system validation
+- [x] 14. UI Refactor: Migrate to new visual design
+  - [x] 14.1 Migrate ResumeForm to ResumeBuilder component
+    - Replace src/components/ResumeForm.tsx with src/temp-ui/components/resume/ResumeBuilder.tsx structure
+    - Preserve all React Hook Form integration, state management, and validation logic
+    - Maintain identical API integration for validation, preview, and export functionality
+    - Ensure "Fill Sample Data" functionality works with new component structure
+    - _Requirements: 10.1, 10.2, 10.3, 10.5_
+
+  - [x] 14.2 Migrate individual section components
+    - Replace existing section components with src/temp-ui/components/resume/*Section.tsx
+    - Preserve all form field validation, error handling, and data binding
+    - Maintain identical Zod validation integration and error display
+    - Ensure collapsible section behavior works correctly
+    - _Requirements: 10.1, 10.2, 10.4_
+
+  - [x] 14.3 Integrate new form field components
+    - Implement FormField, TextInput, and TextAreaInput components from temp-ui
+    - Preserve all validation feedback, error highlighting, and user interaction
+    - Maintain identical form control behavior and data binding
+    - _Requirements: 10.2, 10.7_
+
+  - [x] 14.4 Migrate preview and export functionality
+    - Integrate ResumePreview component with existing preview logic
+    - Preserve PDF export functionality using existing ResumePDF integration
+    - Maintain identical preview update behavior and export file generation
+    - _Requirements: 10.2, 10.6_
+
+  - [x] 14.5 Update routing and navigation
+    - Integrate new Index page component and routing structure
+    - Preserve all existing application navigation and URL handling
+    - Maintain identical application entry points and page structure
+    - _Requirements: 10.1, 10.8_
+
+  - [x] 14.6 Verify functional compatibility
+    - Ensure all existing unit tests pass without modification
+    - Verify all API integration continues to work identically
+    - Test all user workflows: form filling, validation, preview, export
+    - Validate accessibility and keyboard navigation
+    - _Requirements: 10.8_
+
+- [ ] 15. Final checkpoint - Complete system validation
 
 - [ ] 13. Final checkpoint - Complete system validation
   - Ensure all tests pass, ask the user if questions arise.
