@@ -217,6 +217,12 @@ export const AwardSchema = z.object({
   year: z.string()
     .refine(val => !val || /^\d{4}$/.test(val), {
       message: 'Year must be in YYYY format'
+    }),
+  
+  organization: z.string()
+    .min(1, 'Organization is required')
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Organization cannot contain emojis, icons, or graphics'
     })
 });
 

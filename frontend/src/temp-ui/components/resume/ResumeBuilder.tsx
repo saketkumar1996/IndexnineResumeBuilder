@@ -3,8 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Download, FileText, Sparkles, AlertCircle, CheckCircle, ZoomIn, ZoomOut } from "lucide-react";
 import { ResumeData, defaultResumeData, sampleResumeData } from "@/types/resume";
+import logoImage from "@/Black Logo.svg";
 import { ResumeSchema } from "@/schemas/resume";
 import { transformToBackend } from "@/utils/dataTransform";
+import { generatePDF } from "./ResumePDF";
 import { FormSection } from "./FormSection";
 import { HeaderSection } from "./HeaderSection";
 import { ExpertiseSection } from "./ExpertiseSection";
@@ -163,37 +165,23 @@ export const ResumeBuilder = () => {
 
     setIsExporting(true);
     try {
-      // Transform frontend data to backend format
-      const backendData = transformToBackend(watchedData);
-      
-      // Use backend API for PDF generation to maintain consistency
-      const response = await fetch('/api/export', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(backendData),
+      // Use frontend PDF generation to match preview exactly
+      const blob = await generatePDF(watchedData);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${watchedData.header.fullName.replace(/\s+/g, "_")}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Resume exported!",
+        description: "Your resume has been downloaded as a PDF.",
       });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${watchedData.header.fullName.replace(/\s+/g, "_")}_Resume.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        toast({
-          title: "Resume exported!",
-          description: "Your resume has been downloaded as a PDF.",
-        });
-      } else {
-        throw new Error('Export failed');
-      }
     } catch (error) {
+      console.error("PDF generation error:", error);
       toast({
         title: "Export failed",
         description: "There was an error generating your PDF. Please try again.",
@@ -223,13 +211,14 @@ export const ResumeBuilder = () => {
       <header className="sticky top-0 z-50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <FileText className="w-5 h-5 text-primary-foreground" />
-            </div> */}
-            
+            <img 
+              src={logoImage} 
+              alt="Indexnine Logo" 
+              className="h-8"
+              style={{ maxHeight: '32px' }}
+            />
             <div>
-              <h1 className="font-serif text-xl font-bold text-foreground">Indexnine</h1>
-              <p className="text-xs text-muted-foreground">Professional Resume Builder</p>
+              <p className="text-xs text-muted-foreground font-sans">Professional Resume Builder</p>
             </div>
           </div>
 
