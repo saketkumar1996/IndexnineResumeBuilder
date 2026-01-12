@@ -28,7 +28,7 @@ interface BackendExperienceModel {
 interface BackendProjectModel {
   name: string;
   description: string;
-  technologies: string;
+  technology_stack: string;
   start_date: string;
   end_date?: string;
 }
@@ -110,23 +110,64 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
     ? frontendData.experiences[0].title 
     : 'Professional';
 
+  // Convert date format to uppercase (e.g., "Apr 2024" -> "APR 2024")
+  const convertToUppercaseDate = (date: string): string => {
+    if (!date || date === 'Present') return date;
+    const match = date.match(/^([A-Za-z]{3})\s+(\d{4})$/);
+    if (match) {
+      return `${match[1].toUpperCase()} ${match[2]}`;
+    }
+    return date.toUpperCase();
+  };
+
+  // Get all project responsibilities
+  const allProjectResponsibilities = frontendData.projects
+    .filter(p => p.responsibilities && p.responsibilities.length > 0)
+    .flatMap(p => p.responsibilities || [])
+    .filter(r => r && r.trim());
+
+  // Default responsibilities if none available
+  const defaultResponsibilities = [
+    "Developed and maintained software applications following best practices and coding standards.",
+    "Collaborated with cross-functional teams to deliver high-quality solutions on time.",
+    "Participated in code reviews, testing, and debugging to ensure application reliability."
+  ];
+
   // Ensure we have at least one experience with minimum data
   const experiences = frontendData.experiences.length > 0 && frontendData.experiences[0].company
     ? frontendData.experiences
         .filter(exp => exp.company && exp.title) // Only include experiences with required fields
-        .map(exp => ({
-          company: exp.company,
-          position: exp.title,
-          start_date: exp.startDate || 'JAN 2020',
-          end_date: exp.endDate || 'Present',
-          responsibilities: [], // Responsibilities are now in projects
-        }))
+        .map((exp, index) => {
+          // Distribute project responsibilities across experiences, or use defaults
+          let responsibilities: string[];
+          if (allProjectResponsibilities.length >= 3) {
+            // Distribute responsibilities across experiences
+            const responsibilitiesPerExp = Math.max(3, Math.ceil(allProjectResponsibilities.length / frontendData.experiences.length));
+            const startIdx = index * responsibilitiesPerExp;
+            const endIdx = Math.min(startIdx + responsibilitiesPerExp, allProjectResponsibilities.length);
+            responsibilities = allProjectResponsibilities.slice(startIdx, endIdx);
+            // Ensure at least 3
+            if (responsibilities.length < 3) {
+              responsibilities = [...responsibilities, ...defaultResponsibilities.slice(0, 3 - responsibilities.length)];
+            }
+          } else {
+            responsibilities = defaultResponsibilities;
+          }
+          
+          return {
+            company: exp.company,
+            position: exp.title,
+            start_date: convertToUppercaseDate(exp.startDate || 'JAN 2020'),
+            end_date: exp.endDate ? convertToUppercaseDate(exp.endDate) : 'Present',
+            responsibilities: responsibilities.slice(0, Math.max(3, responsibilities.length)),
+          };
+        })
     : [{
         company: 'Company Name',
         position: 'Position Title',
         start_date: 'JAN 2020',
         end_date: 'Present',
-        responsibilities: [],
+        responsibilities: defaultResponsibilities,
       }];
 
   // Ensure we have at least one education entry
@@ -160,14 +201,14 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
         .map(proj => ({
           name: proj.name,
           description: proj.description,
-          technologies: proj.technologies || 'Various technologies',
+          technology_stack: proj.technologies || 'Various technologies', // Backend expects technology_stack
           start_date: 'JAN 2023',
           end_date: 'DEC 2023',
         }))
     : [{
         name: 'Sample Project',
         description: 'Project description will appear here',
-        technologies: 'Various technologies',
+        technology_stack: 'Various technologies',
         start_date: 'JAN 2023',
         end_date: 'DEC 2023',
       }];
@@ -191,7 +232,7 @@ export function transformToBackend(frontendData: ResumeData): BackendResumeModel
     education: education,
     awards: frontendData.awards?.filter(award => award.title && award.year).map(award => ({
       title: award.title,
-      organization: '', // Awards don't have issuer in new schema
+      organization: 'Organization', // Backend requires organization with at least 1 character
       date: `JAN ${award.year}` || 'JAN 2023',
       description: '',
     })) || [],

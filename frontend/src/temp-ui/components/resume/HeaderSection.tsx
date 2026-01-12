@@ -1,6 +1,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { ResumeData } from "@/types/resume";
 import { TextInput } from "./FormField";
+import { Linkedin, Github, Globe } from "lucide-react";
 
 interface HeaderSectionProps {
   form: UseFormReturn<ResumeData>;
@@ -64,30 +65,48 @@ export const HeaderSection = ({ form }: HeaderSectionProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <TextInput
-          label="LinkedIn (Optional)"
-          type="url"
-          value={header.linkedin || ""}
-          onChange={(value) => setValue("header.linkedin", value, { shouldValidate: true })}
-          error={errors.header?.linkedin?.message}
-          placeholder="https://linkedin.com/in/yourprofile"
-        />
-        <TextInput
-          label="GitHub (Optional)"
-          type="url"
-          value={header.github || ""}
-          onChange={(value) => setValue("header.github", value, { shouldValidate: true })}
-          error={errors.header?.github?.message}
-          placeholder="https://github.com/yourusername"
-        />
-        <TextInput
-          label="Portfolio (Optional)"
-          type="url"
-          value={header.portfolio || ""}
-          onChange={(value) => setValue("header.portfolio", value, { shouldValidate: true })}
-          error={errors.header?.portfolio?.message}
-          placeholder="https://yourportfolio.com"
-        />
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+            <Linkedin size={14} className="text-muted-foreground" />
+            LinkedIn (Optional)
+          </label>
+          <TextInput
+            label=""
+            type="url"
+            value={header.linkedin || ""}
+            onChange={(value) => setValue("header.linkedin", value, { shouldValidate: true })}
+            error={errors.header?.linkedin?.message}
+            placeholder="https://linkedin.com/in/yourprofile"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+            <Github size={14} className="text-muted-foreground" />
+            GitHub (Optional)
+          </label>
+          <TextInput
+            label=""
+            type="url"
+            value={header.github || ""}
+            onChange={(value) => setValue("header.github", value, { shouldValidate: true })}
+            error={errors.header?.github?.message}
+            placeholder="https://github.com/yourusername"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+            <Globe size={14} className="text-muted-foreground" />
+            Portfolio (Optional)
+          </label>
+          <TextInput
+            label=""
+            type="url"
+            value={header.portfolio || ""}
+            onChange={(value) => setValue("header.portfolio", value, { shouldValidate: true })}
+            error={errors.header?.portfolio?.message}
+            placeholder="https://yourportfolio.com"
+          />
+        </div>
       </div>
     </div>
   );

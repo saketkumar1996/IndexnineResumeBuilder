@@ -91,7 +91,7 @@ export const TextAreaInput = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className={error ? "border-destructive focus-visible:ring-destructive" : ""}
+        className={`w-full ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
       />
       {showWordCount && (
         <p className="text-xs text-muted-foreground mt-1">
