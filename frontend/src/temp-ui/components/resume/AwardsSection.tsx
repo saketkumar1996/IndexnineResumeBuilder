@@ -45,8 +45,8 @@ export const AwardsSection = ({ form }: AwardsSectionProps) => {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
                 <TextInput
                   label="Award Title"
                   value={awards[index]?.title || ""}
@@ -65,6 +65,14 @@ export const AwardsSection = ({ form }: AwardsSectionProps) => {
                 placeholder="2016"
               />
             </div>
+            <TextInput
+              label="Organization"
+              value={awards[index]?.organization || ""}
+              onChange={(value) => setValue(`awards.${index}.organization`, value, { shouldValidate: true })}
+              error={errors.awards?.[index]?.organization?.message}
+              required
+              placeholder="College"
+            />
           </motion.div>
         ))}
       </AnimatePresence>
@@ -73,7 +81,7 @@ export const AwardsSection = ({ form }: AwardsSectionProps) => {
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ title: "", year: "" })}
+          onClick={() => append({ title: "", year: "", organization: "" })}
           className="w-full"
         >
           <Plus size={16} className="mr-2" />

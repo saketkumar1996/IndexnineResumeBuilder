@@ -79,15 +79,17 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
         </p>
 
         {expertise.bulletPoints?.map((point, index) => (
-          <div key={index} className="flex gap-2">
-            <TextAreaInput
-              label=""
-              value={point}
-              onChange={(value) => updateBulletPoint(index, value)}
-              error={errors.expertise?.bulletPoints?.[index]?.message}
-              placeholder="Skilled in investigating and troubleshooting issues..."
-              rows={2}
-            />
+          <div key={index} className="flex gap-2 items-start">
+            <div className="flex-1 min-w-0">
+              <TextAreaInput
+                label=""
+                value={point}
+                onChange={(value) => updateBulletPoint(index, value)}
+                error={errors.expertise?.bulletPoints?.[index]?.message}
+                placeholder="Skilled in investigating and troubleshooting issues..."
+                rows={2}
+              />
+            </div>
             <Button
               type="button"
               variant="ghost"

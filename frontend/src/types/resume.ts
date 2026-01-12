@@ -52,6 +52,7 @@ export interface EducationData {
 export interface AwardData {
   title: string;
   year: string;
+  organization?: string;
 }
 
 export interface ResumeData {
@@ -127,7 +128,7 @@ export const sampleResumeData: ResumeData = {
     portfolio: "https://firstname-secondname.dev",
   },
   expertise: {
-    summary: "6+ years of experience in designing, developing, modifying, debugging, and maintaining software code according to functional, non-functional, and technical design specifications. Skilled in investigating and troubleshooting issues by reviewing and debugging code, providing fixes and workarounds, and ensuring operability for maintaining existing software solutions. Worked across various domains viz. Security, Education, Fintech, Security and Travel. Good communication and interpersonal skills, accustomed to working in a team environment and capable of working efficiently under pressure.",
+    summary: "6+ years of experience in designing, developing, modifying, debugging, and maintaining software code according to functional, non-functional, and technical design specifications. Skilled in investigating and troubleshooting issues by reviewing and debugging code, providing fixes and workarounds, and ensuring operability for maintaining existing software solutions. Worked across various domains including Security, Education, Fintech, and Travel, delivering high-quality solutions that meet business requirements. Strong expertise in front-end technologies and modern JavaScript frameworks. Good communication and interpersonal skills, accustomed to working in a team environment and capable of working efficiently under pressure while meeting tight deadlines.",
     bulletPoints: [
       "Skilled in investigating and troubleshooting issues by reviewing and debugging code, providing fixes and workarounds, and ensuring operability for maintaining existing software solutions.",
       "Worked across various domains viz. Security, Education, Fintech, Security and Travel.",
@@ -142,22 +143,22 @@ export const sampleResumeData: ResumeData = {
       company: "Indexnine Technologies Pvt. Ltd.",
       title: "Sr. Consultant - Senior Software Engineer",
       location: "Pune",
-      startDate: "Apr 2024",
+      startDate: "APR 2024",
       endDate: "Present",
     },
     {
       company: "Indexnine Technologies Pvt. Ltd.",
       title: "Consultant - Senior Software Engineer",
       location: "Pune",
-      startDate: "Apr 2023",
-      endDate: "Mar 2024",
+      startDate: "APR 2023",
+      endDate: "MAR 2024",
     },
     {
       company: "Indexnine Technologies Pvt. Ltd.",
       title: "Software Engineer",
       location: "Pune",
-      startDate: "Jan 2021",
-      endDate: "Mar 2023",
+      startDate: "JAN 2021",
+      endDate: "MAR 2023",
     },
   ],
   projects: [
@@ -226,10 +227,12 @@ export const sampleResumeData: ResumeData = {
     {
       title: "Secured first Rank at college level Web Page Design Competition",
       year: "2016",
+      organization: "College",
     },
     {
       title: "Third prize in Hackathon (TECHNOFEST) in college",
       year: "2015",
+      organization: "College",
     },
   ],
 };

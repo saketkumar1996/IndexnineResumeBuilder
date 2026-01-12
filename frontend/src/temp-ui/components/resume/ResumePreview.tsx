@@ -1,4 +1,6 @@
 import { ResumeData } from "@/types/resume";
+import { Linkedin, Github, Globe } from "lucide-react";
+import logoImage from "@/Black Logo.svg";
 
 interface ResumePreviewProps {
   data: ResumeData;
@@ -35,22 +37,65 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
         <div className="px-12 py-8 text-[11px] leading-relaxed" style={{ color: grayColor }}>
           {/* Logo in top-right */}
           <div className="flex justify-end mb-2">
-            <div className="flex items-center gap-1" style={{ color: greenColor }}>
-              <span className="text-lg font-bold">⊞</span>
-              <span className="text-sm font-bold tracking-wide">INDEXNINE</span>
-            </div>
+            <img 
+              src={logoImage} 
+              alt="Indexnine Logo" 
+              className="h-5"
+              style={{ maxHeight: '20px' }}
+            />
           </div>
 
           {/* Header */}
           {header.fullName && (
             <div className="mb-4">
-              <h1 className="text-4xl font-light tracking-wide mb-1" style={{ color: grayColor }}>
+              <h1 className="text-3xl font-light tracking-wide mb-4" style={{ color: grayColor }}>
                 {header.fullName}
               </h1>
               {header.designation && (
-                <p className="text-lg mb-3" style={{ color: greenColor }}>
+                <p className="text-lg mb-2" style={{ color: greenColor }}>
                   {header.designation}
                 </p>
+              )}
+              {/* Social Links */}
+              {(header.linkedin || header.github || header.portfolio) && (
+                <div className="flex items-center gap-4 mb-3">
+                  {header.linkedin && (
+                    <a
+                      href={header.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] hover:underline"
+                      style={{ color: grayColor }}
+                    >
+                      <Linkedin size={12} style={{ color: greenColor }} />
+                      <span>LinkedIn</span>
+                    </a>
+                  )}
+                  {header.github && (
+                    <a
+                      href={header.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] hover:underline"
+                      style={{ color: grayColor }}
+                    >
+                      <Github size={12} style={{ color: greenColor }} />
+                      <span>GitHub</span>
+                    </a>
+                  )}
+                  {header.portfolio && (
+                    <a
+                      href={header.portfolio}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] hover:underline"
+                      style={{ color: grayColor }}
+                    >
+                      <Globe size={12} style={{ color: greenColor }} />
+                      <span>Portfolio</span>
+                    </a>
+                  )}
+                </div>
               )}
               {/* Green bar separator */}
               <div className="h-1.5 w-full mb-4" style={{ backgroundColor: greenColor }}></div>
