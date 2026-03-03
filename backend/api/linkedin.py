@@ -8,7 +8,7 @@ import base64
 import json
 import os
 import re
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 from urllib.parse import urlencode
 
 import httpx
@@ -134,7 +134,7 @@ async def linkedin_callback(
     }
     json_str = json.dumps(resume_data)
     encoded = base64.urlsafe_b64encode(json_str.encode("utf-8")).decode("ascii").rstrip("=")
-    redirect_url = f"{FRONTEND_REDIRECT_URL}?linkedin_data={encoded}"
+    redirect_url = f"{FRONTEND_REDIRECT_URL}/signin?linkedin_data={encoded}"
     return RedirectResponse(redirect_url, status_code=302)
 
 
@@ -177,7 +177,7 @@ Return ONLY valid JSON (no markdown, no code fences, no explanation). Use this e
 Rules: Use empty string for missing fields. Dates: "Jan 2020", "Present". Years: "2015", "2019". Extract everything you can find; omit arrays if none found."""
 
 
-def _extract_json_from_response(content: str) -> dict[str, Any]:
+def _extract_json_from_response(content: str) -> Dict[str, Any]:
     """Pull raw JSON out of AI response (handles markdown code blocks)."""
     content = content.strip()
     # Strip markdown code block if present
@@ -202,7 +202,9 @@ async def parse_profile_with_ai(body: ParseProfileRequest):
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=api_key)
+        # Use OpenRouter's API endpoint (compatible with OpenAI client)
+        base_url = os.getenv("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
+        client = OpenAI(api_key=api_key, base_url=base_url)
         resp = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[

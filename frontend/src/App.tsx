@@ -1,15 +1,23 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ResumeBuilder } from './temp-ui/components/resume/ResumeBuilder';
+import SignIn from './temp-ui/pages/SignIn';
+import NotFound from './temp-ui/pages/NotFound';
 import { Toaster } from './temp-ui/components/ui/toaster';
-import { ResumeData } from './types/resume';
-import { PreviewResponse } from './types/resume';
 
 function App() {
   return (
-    <div className="min-h-screen">
-      <ResumeBuilder />
-      <Toaster />
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<Navigate to="/signin" replace />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/builder" element={<ResumeBuilder />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </div>
+    </BrowserRouter>
   );
 }
 

@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Download, Sparkles, AlertCircle, CheckCircle, ZoomIn, ZoomOut, Linkedin, Bot } from "lucide-react";
+import { Download, Sparkles, AlertCircle, CheckCircle, ZoomIn, ZoomOut, Upload } from "lucide-react";
 import { ResumeData, defaultResumeData, sampleResumeData } from "@/types/resume";
 import logoImage from "@/Black Logo.svg";
 import { ResumeSchema } from "@/schemas/resume";
@@ -16,15 +16,6 @@ import { ProjectsSection } from "./ProjectsSection";
 import { AwardsSection } from "./AwardsSection";
 import { ResumePreview } from "./ResumePreview";
 import { Button } from "@/temp-ui/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/temp-ui/components/ui/dialog";
-import { Textarea } from "@/temp-ui/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 // Helper function to check if all required data is filled
@@ -110,9 +101,8 @@ export const ResumeBuilder = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const [previewScale, setPreviewScale] = useState(0.6);
-  const [aiPasteDialogOpen, setAiPasteDialogOpen] = useState(false);
-  const [aiPasteText, setAiPasteText] = useState("");
-  const [isParsingWithAI, setIsParsingWithAI] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ResumeData>({
     resolver: zodResolver(ResumeSchema),
@@ -153,34 +143,68 @@ export const ResumeBuilder = () => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Handle LinkedIn OAuth redirect with imported data
+  // Handle LinkedIn OAuth redirect with imported data from sessionStorage
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const encoded = params.get("linkedin_data");
-    if (!encoded) return;
-
-    try {
-      const padded = encoded.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (encoded.length % 4)) % 4);
-      const json = atob(padded);
-      const imported = JSON.parse(json) as ResumeData;
-      reset(imported);
-      // Re-run validation after reset
-      setTimeout(() => {
-        trigger();
-      }, 0);
-      toast({
-        title: "LinkedIn data imported",
-        description: "Review and complete any missing fields before exporting.",
-      });
-      // Clean query param from URL
-      params.delete("linkedin_data");
-      const newQuery = params.toString();
-      const newUrl = `${window.location.pathname}${newQuery ? `?${newQuery}` : ""}${window.location.hash}`;
-      window.history.replaceState(null, "", newUrl);
-    } catch (err) {
-      console.error("Failed to import LinkedIn data", err);
+    // Check for LinkedIn data from sign-in page
+    const linkedinData = sessionStorage.getItem("linkedin_data");
+    if (linkedinData) {
+      try {
+        const imported = JSON.parse(linkedinData) as ResumeData;
+        reset(imported);
+        setTimeout(() => {
+          trigger();
+        }, 0);
+        toast({
+          title: "LinkedIn data imported",
+          description: "Review and complete any missing fields before exporting.",
+        });
+        sessionStorage.removeItem("linkedin_data");
+      } catch (err) {
+        console.error("Failed to import LinkedIn data", err);
+        sessionStorage.removeItem("linkedin_data");
+      }
     }
-  }, [reset, trigger, toast]);
+
+    // Check for uploaded resume data from sign-in page
+    const uploadedData = sessionStorage.getItem("uploaded_resume_data");
+    if (uploadedData) {
+      try {
+        const extractedData = JSON.parse(uploadedData) as Partial<ResumeData>;
+        const current = watchedData;
+        const merged: ResumeData = {
+          ...defaultResumeData,
+          header: {
+            ...current.header,
+            ...(extractedData.header || {}),
+            fullName: (extractedData.header?.fullName || current.header.fullName) || "",
+            designation: (extractedData.header?.designation || current.header.designation) || "",
+            email: (extractedData.header?.email || current.header.email) || "",
+            phone: (extractedData.header?.phone || current.header.phone) || "",
+            location: (extractedData.header?.location || current.header.location) || "",
+          },
+          expertise: {
+            summary: (extractedData.expertise?.summary || current.expertise.summary) || "",
+            bulletPoints: (extractedData.expertise?.bulletPoints?.length ? extractedData.expertise.bulletPoints : current.expertise.bulletPoints) || [],
+          },
+          skills: { skills: (extractedData.skills?.skills || current.skills.skills) || "" },
+          experiences: (extractedData.experiences?.length ? extractedData.experiences : current.experiences) || [],
+          projects: (extractedData.projects?.length ? extractedData.projects : current.projects) || [],
+          education: (extractedData.education?.length ? extractedData.education : current.education) || [],
+          awards: (extractedData.awards?.length ? extractedData.awards : current.awards) || [],
+        };
+        reset(merged);
+        trigger();
+        toast({
+          title: "Resume uploaded successfully",
+          description: "Review and adjust any fields as needed.",
+        });
+        sessionStorage.removeItem("uploaded_resume_data");
+      } catch (err) {
+        console.error("Failed to import uploaded resume data", err);
+        sessionStorage.removeItem("uploaded_resume_data");
+      }
+    }
+  }, [reset, trigger, toast, watchedData]);
 
   const handleFillSampleData = () => {
     reset(sampleResumeData);
@@ -191,44 +215,79 @@ export const ResumeBuilder = () => {
     });
   };
 
-  const handleExtractFromLinkedIn = () => {
-    window.location.href = "/api/linkedin/auth";
-  };
 
-  const handleParseWithAI = async () => {
-    if (!aiPasteText.trim()) return;
-    setIsParsingWithAI(true);
-    try {
-      const res = await fetch("/api/linkedin/parse-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: aiPasteText }),
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    const validExtensions = [".pdf", ".docx"];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."));
+    
+    if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF or DOCX file.",
+        variant: "destructive",
       });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-resume", {
+        method: "POST",
+        body: formData,
+      });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail));
       }
-      const aiData = (await res.json()) as Partial<ResumeData>;
+
+      const extractedData = (await res.json()) as Partial<ResumeData>;
       const current = watchedData;
       const merged: ResumeData = {
         ...defaultResumeData,
-        header: { ...current.header, ...(aiData.header || {}), fullName: (aiData.header?.fullName || current.header.fullName) || "", designation: (aiData.header?.designation || current.header.designation) || "", email: (aiData.header?.email || current.header.email) || "", phone: (aiData.header?.phone || current.header.phone) || "", location: (aiData.header?.location || current.header.location) || "" },
-        expertise: { summary: (aiData.expertise?.summary || current.expertise.summary) || "", bulletPoints: (aiData.expertise?.bulletPoints?.length ? aiData.expertise.bulletPoints : current.expertise.bulletPoints) || [] },
-        skills: { skills: (aiData.skills?.skills || current.skills.skills) || "" },
-        experiences: (aiData.experiences?.length ? aiData.experiences : current.experiences) || [],
-        projects: (aiData.projects?.length ? aiData.projects : current.projects) || [],
-        education: (aiData.education?.length ? aiData.education : current.education) || [],
-        awards: (aiData.awards?.length ? aiData.awards : current.awards) || [],
+        header: {
+          ...current.header,
+          ...(extractedData.header || {}),
+          fullName: (extractedData.header?.fullName || current.header.fullName) || "",
+          designation: (extractedData.header?.designation || current.header.designation) || "",
+          email: (extractedData.header?.email || current.header.email) || "",
+          phone: (extractedData.header?.phone || current.header.phone) || "",
+          location: (extractedData.header?.location || current.header.location) || "",
+        },
+        expertise: {
+          summary: (extractedData.expertise?.summary || current.expertise.summary) || "",
+          bulletPoints: (extractedData.expertise?.bulletPoints?.length ? extractedData.expertise.bulletPoints : current.expertise.bulletPoints) || [],
+        },
+        skills: { skills: (extractedData.skills?.skills || current.skills.skills) || "" },
+        experiences: (extractedData.experiences?.length ? extractedData.experiences : current.experiences) || [],
+        projects: (extractedData.projects?.length ? extractedData.projects : current.projects) || [],
+        education: (extractedData.education?.length ? extractedData.education : current.education) || [],
+        awards: (extractedData.awards?.length ? extractedData.awards : current.awards) || [],
       };
       reset(merged);
       trigger();
-      setAiPasteDialogOpen(false);
-      setAiPasteText("");
-      toast({ title: "AI extraction done", description: "Review and adjust any fields as needed." });
+      toast({
+        title: "Resume uploaded successfully",
+        description: "Review and adjust any fields as needed.",
+      });
     } catch (e) {
-      toast({ title: "AI extract failed", description: e instanceof Error ? e.message : "Check OPENAI_API_KEY and try again.", variant: "destructive" });
+      toast({
+        title: "Upload failed",
+        description: e instanceof Error ? e.message : "Failed to extract data from resume. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsParsingWithAI(false);
+      setIsUploading(false);
+      // Reset file input
+      event.target.value = "";
     }
   };
 
@@ -316,23 +375,23 @@ export const ResumeBuilder = () => {
                 <span>Ready to export</span>
               </div>
             )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              className="hidden"
+            />
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExtractFromLinkedIn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
               className="hidden sm:flex"
             >
-              <Linkedin size={16} className="mr-2" />
-              Extract from LinkedIn
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setAiPasteText(""); setAiPasteDialogOpen(true); }}
-              className="hidden sm:flex"
-            >
-              <Bot size={16} className="mr-2" />
-              Paste & extract with AI
+              <Upload size={16} className="mr-2" />
+              {isUploading ? "Uploading..." : "Upload Resume"}
             </Button>
             <Button
               variant="outline"
@@ -359,43 +418,6 @@ export const ResumeBuilder = () => {
         </div>
       </header>
 
-      {/* Paste & extract with AI dialog */}
-      <Dialog open={aiPasteDialogOpen} onOpenChange={setAiPasteDialogOpen}>
-        <DialogContent className="sm:max-w-[560px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bot size={20} className="text-muted-foreground" />
-              Paste & extract with AI
-            </DialogTitle>
-            <DialogDescription>
-              Paste your full LinkedIn profile (About, Experience, Education, Skills, etc.). AI will extract and fill all resume fields. You can paste after &quot;Extract from LinkedIn&quot; to add experience and education on top of name and email.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <label htmlFor="ai-paste" className="text-sm font-medium text-foreground">
-              Paste LinkedIn or resume text
-            </label>
-            <Textarea
-              id="ai-paste"
-              placeholder="Paste About, Experience, Education, Skills, Projects..."
-              value={aiPasteText}
-              onChange={(e) => setAiPasteText(e.target.value)}
-              className="min-h-[220px] resize-y font-mono text-sm"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAiPasteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleParseWithAI}
-              disabled={!aiPasteText.trim() || isParsingWithAI}
-            >
-              {isParsingWithAI ? "Extracting..." : "Extract with AI"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
@@ -407,13 +429,22 @@ export const ResumeBuilder = () => {
                 Resume Details
               </h2>
               <div className="flex gap-2 sm:hidden">
-                <Button variant="ghost" size="sm" onClick={handleExtractFromLinkedIn}>
-                  <Linkedin size={16} className="mr-2" />
-                  Extract
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => { setAiPasteText(""); setAiPasteDialogOpen(true); }}>
-                  <Bot size={16} className="mr-2" />
-                  AI
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <Upload size={16} className="mr-2" />
+                  {isUploading ? "..." : "Upload"}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleFillSampleData}>
                   <Sparkles size={16} className="mr-2" />

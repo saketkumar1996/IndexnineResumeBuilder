@@ -1,7 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel, ValidationError
 from typing import List, Dict, Any, Optional
 from models.resume_models import ResumeModel
+import os
+import json
+import re
 
 router = APIRouter()
 
@@ -211,3 +214,178 @@ async def export_pdf(resume_data: Dict[str, Any]):
             status_code=500,
             detail=f"Error generating PDF export: {str(e)}"
         )
+
+
+# Resume extraction prompt for AI
+RESUME_SCHEMA_PROMPT = """You are a resume parser. Extract structured resume data from the uploaded resume document (PDF or DOCX).
+
+Return ONLY valid JSON (no markdown, no code fences, no explanation). Use this exact structure:
+
+{
+  "header": {
+    "fullName": "string",
+    "designation": "string",
+    "email": "string or empty",
+    "phone": "string or empty",
+    "location": "string or empty",
+    "linkedin": "string or empty",
+    "github": "string or empty",
+    "portfolio": "string or empty"
+  },
+  "expertise": {
+    "summary": "string, 80-120 words professional summary",
+    "bulletPoints": ["string", "string"]
+  },
+  "skills": { "skills": "comma-separated string" },
+  "experiences": [
+    { "company": "", "title": "", "location": "", "startDate": "MMM YYYY", "endDate": "MMM YYYY or Present" }
+  ],
+  "projects": [
+    { "name": "", "description": "", "technologies": "", "link": "" }
+  ],
+  "education": [
+    { "institution": "", "degree": "", "location": "", "startYear": "YYYY", "endYear": "YYYY", "gpa": "", "honors": "" }
+  ],
+  "awards": [
+    { "title": "", "year": "YYYY", "organization": "" }
+  ]
+}
+
+Rules: Use empty string for missing fields. Dates: "Jan 2020", "Present". Years: "2015", "2019". Extract everything you can find; omit arrays if none found."""
+
+
+def _extract_json_from_response(content: str) -> Dict[str, Any]:
+    """Pull raw JSON out of AI response (handles markdown code blocks)."""
+    content = content.strip()
+    # Strip markdown code block if present
+    m = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", content)
+    if m:
+        content = m.group(1).strip()
+    return json.loads(content)
+
+
+def _extract_text_from_pdf(file_content: bytes) -> str:
+    """Extract text from PDF file."""
+    try:
+        import PyPDF2
+        from io import BytesIO
+        
+        pdf_file = BytesIO(file_content)
+        pdf_reader = PyPDF2.PdfReader(pdf_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+        return text
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to extract text from PDF: {str(e)}"
+        )
+
+
+def _extract_text_from_docx(file_content: bytes) -> str:
+    """Extract text from DOCX file."""
+    try:
+        from docx import Document
+        from io import BytesIO
+        
+        docx_file = BytesIO(file_content)
+        doc = Document(docx_file)
+        text = ""
+        for paragraph in doc.paragraphs:
+            text += paragraph.text + "\n"
+        # Also extract text from tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + " "
+                text += "\n"
+        return text
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to extract text from DOCX: {str(e)}"
+        )
+
+
+@router.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Upload a resume file (PDF or DOCX) and extract structured data using AI.
+    
+    This endpoint accepts PDF or DOCX files, extracts text, and uses AI to parse
+    the resume content into structured data matching the ResumeData schema.
+    """
+    # Validate file type
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+    
+    file_extension = file.filename.lower().split(".")[-1]
+    if file_extension not in ["pdf", "docx"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file type. Please upload a PDF or DOCX file."
+        )
+    
+    # Check if OpenAI API key is configured
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="AI parse is not configured. Set OPENAI_API_KEY in backend/.env",
+        )
+    
+    try:
+        # Read file content
+        file_content = await file.read()
+        
+        # Extract text based on file type
+        if file_extension == "pdf":
+            extracted_text = _extract_text_from_pdf(file_content)
+        else:  # docx
+            extracted_text = _extract_text_from_docx(file_content)
+        
+        if not extracted_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from the uploaded file. Please ensure the file contains readable text."
+            )
+        
+        # Use AI to parse the extracted text
+        from openai import OpenAI
+        
+        base_url = os.getenv("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": RESUME_SCHEMA_PROMPT},
+                {"role": "user", "content": extracted_text.strip()[:12000]},
+            ],
+            temperature=0.2,
+        )
+        
+        raw = resp.choices[0].message.content or "{}"
+        data = _extract_json_from_response(raw)
+        
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"AI returned invalid JSON: {e}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to process resume: {str(e)}")
+    
+    # Normalize shape so frontend gets expected keys
+    if "header" not in data:
+        data["header"] = {}
+    for key in ("fullName", "designation", "email", "phone", "location", "linkedin", "github", "portfolio"):
+        data["header"].setdefault(key, "")
+    data.setdefault("expertise", {"summary": "", "bulletPoints": []})
+    data.setdefault("skills", {"skills": ""})
+    data.setdefault("experiences", [])
+    data.setdefault("projects", [])
+    data.setdefault("education", [])
+    data.setdefault("awards", [])
+    
+    return data
