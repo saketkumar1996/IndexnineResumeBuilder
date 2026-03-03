@@ -2,8 +2,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load .env from the backend directory so it works when run from project root or backend/
-load_dotenv(Path(__file__).resolve().parent / ".env")
+# Load .env from project root first, then fall back to backend directory
+# This allows .env to be in either location
+project_root = Path(__file__).resolve().parent.parent
+backend_dir = Path(__file__).resolve().parent
+load_dotenv(project_root / ".env")  # Try root first
+load_dotenv(backend_dir / ".env", override=False)  # Fall back to backend/.env if root doesn't exist
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
