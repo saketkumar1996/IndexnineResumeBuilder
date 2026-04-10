@@ -146,23 +146,48 @@ export const ExperienceSchema = z.object({
 // Project Schema
 export const ProjectSchema = z.object({
   name: z.string()
+    .min(1, 'Project name is required')
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Project name cannot contain emojis, icons, or graphics'
     }),
-  
+
+  client: z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Client cannot contain emojis, icons, or graphics'
+    })
+    .optional(),
+
   description: z.string()
+    .min(1, 'Description is required')
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Description cannot contain emojis, icons, or graphics'
     }),
-  
+
   technologies: z.string()
+    .min(1, 'Technology stack is required')
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Technologies cannot contain emojis, icons, or graphics'
     }),
 
-  link: z.string()
-    .refine(val => !val || /^https?:\/\/.+/.test(val), {
-      message: 'Link must be a valid URL'
+  developmentTools: z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Development tools cannot contain emojis, icons, or graphics'
+    })
+    .optional(),
+
+  teamSize: z.string()
+    .refine(val => !val || /^\d+$/.test(val), {
+      message: 'Team size must be a number'
+    })
+    .optional(),
+
+  responsibilities: z.array(
+    z.string().refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Responsibilities cannot contain emojis, icons, or graphics'
+    })
+  )
+    .refine(validateMinResponsibilities, {
+      message: 'Minimum 3 responsibilities required'
     })
     .optional()
 });

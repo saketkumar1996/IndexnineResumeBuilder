@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Download, Sparkles, AlertCircle, CheckCircle, ZoomIn, ZoomOut, Upload } from "lucide-react";
+import { Download, Sparkles, AlertCircle, ZoomIn, ZoomOut, Upload } from "lucide-react";
 import { ResumeData, defaultResumeData, sampleResumeData } from "@/types/resume";
 import logoImage from "@/Black Logo.svg";
 import { ResumeSchema } from "@/schemas/resume";
@@ -18,74 +18,14 @@ import { ResumePreview } from "./ResumePreview";
 import { Button } from "@/temp-ui/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-// Helper function to check if all required data is filled
-const isAllDataFilled = (data: ResumeData): boolean => {
-  // Check header - required fields: fullName, designation, email, phone, location
-  if (!data.header?.fullName?.trim() || 
-      !data.header?.designation?.trim() ||
-      !data.header?.email?.trim() || 
-      !data.header?.phone?.trim() || 
-      !data.header?.location?.trim()) {
-    return false;
-  }
-
-  // Check expertise - required: summary (must be 80-120 words)
-  if (!data.expertise?.summary?.trim()) {
-    return false;
-  }
-  const wordCount = data.expertise.summary.split(/\s+/).filter(word => word.length > 0).length;
-  if (wordCount < 80 || wordCount > 120) {
-    return false;
-  }
-
-  // Check skills - must have skills string
-  if (!data.skills?.skills?.trim()) {
-    return false;
-  }
-
-  // Check experiences - at least one experience with all required fields
-  if (!data.experiences || data.experiences.length === 0) {
-    return false;
-  }
-  const hasValidExperience = data.experiences.some(exp => {
-    return exp.company?.trim() && 
-           exp.title?.trim() && 
-           exp.location?.trim() && 
-           exp.startDate?.trim();
-  });
-  if (!hasValidExperience) {
-    return false;
-  }
-
-  // Check projects - at least one project with name, description, technologies
-  if (!data.projects || data.projects.length === 0) {
-    return false;
-  }
-  const hasValidProject = data.projects.some(proj => 
-    proj.name?.trim() && 
-    proj.description?.trim() && 
-    proj.technologies?.trim()
-  );
-  if (!hasValidProject) {
-    return false;
-  }
-
-  // Check education - at least one education entry with required fields
-  if (!data.education || data.education.length === 0) {
-    return false;
-  }
-  const hasValidEducation = data.education.some(edu => 
-    edu.institution?.trim() && 
-    edu.degree?.trim() && 
-    edu.location?.trim() && 
-    edu.startYear?.trim() &&
-    edu.endYear?.trim()
-  );
-  if (!hasValidEducation) {
-    return false;
-  }
-
-  return true;
+const SECTION_NAMES: Record<string, string> = {
+  header:      "Contact Information",
+  expertise:   "Professional Summary",
+  skills:      "Technical Skills",
+  experiences: "Work Experience",
+  projects:    "Projects",
+  education:   "Education",
+  awards:      "Awards & Certifications",
 };
 
 export const ResumeBuilder = () => {
@@ -110,7 +50,7 @@ export const ResumeBuilder = () => {
     mode: "onChange",
   });
 
-  const { watch, formState: { errors, isValid }, reset, trigger } = form;
+  const { watch, formState: { errors }, reset, trigger } = form;
   const watchedData = watch();
 
   const handleZoomIn = () => {
@@ -293,19 +233,23 @@ export const ResumeBuilder = () => {
 
   const handleExport = async () => {
     const isFormValid = await trigger();
-    
+
     if (!isFormValid) {
-      toast({
-        title: "Validation errors",
-        description: "Please fix all errors before exporting.",
-        variant: "destructive",
+      const currentErrors = form.formState.errors;
+      Object.keys(SECTION_NAMES).forEach((key) => {
+        if (currentErrors[key as keyof typeof currentErrors]) {
+          toast({
+            title: `${SECTION_NAMES[key]} has errors`,
+            description: "Please fix the highlighted fields before exporting.",
+            variant: "destructive",
+          });
+        }
       });
       return;
     }
 
     setIsExporting(true);
     try {
-      // Use frontend PDF generation to match preview exactly
       const blob = await generatePDF(watchedData);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -315,7 +259,6 @@ export const ResumeBuilder = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
       toast({
         title: "Resume exported!",
         description: "Your resume has been downloaded as a PDF.",
@@ -333,17 +276,6 @@ export const ResumeBuilder = () => {
   };
 
   const hasErrors = Object.keys(errors).length > 0;
-  const errorCount = Object.keys(errors).reduce((count, key) => {
-    const sectionErrors = errors[key as keyof typeof errors];
-    if (Array.isArray(sectionErrors)) {
-      return count + sectionErrors.filter(Boolean).length;
-    }
-    return count + (sectionErrors ? 1 : 0);
-  }, 0);
-
-  // Check if all required data is filled (not just validation passing)
-  const allDataFilled = isAllDataFilled(watchedData);
-  const readyToExport = isValid && allDataFilled;
 
   return (
     <div className="min-h-screen bg-background">
@@ -366,13 +298,7 @@ export const ResumeBuilder = () => {
             {hasErrors && (
               <div className="hidden sm:flex items-center gap-2 text-destructive text-sm">
                 <AlertCircle size={16} />
-                <span>{errorCount} {errorCount === 1 ? "error" : "errors"}</span>
-              </div>
-            )}
-            {readyToExport && (
-              <div className="hidden sm:flex items-center gap-2 text-success text-sm">
-                <CheckCircle size={16} />
-                <span>Ready to export</span>
+                <span>Errors in form</span>
               </div>
             )}
             <input
@@ -404,12 +330,8 @@ export const ResumeBuilder = () => {
             </Button>
             <Button
               onClick={handleExport}
-              disabled={!readyToExport || isExporting}
-              className={`${
-                readyToExport && !isExporting
-                  ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                  : "bg-muted text-muted-foreground cursor-not-allowed"
-              }`}
+              disabled={isExporting}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
             >
               <Download size={16} className="mr-2" />
               {isExporting ? "Exporting..." : "Export PDF"}

@@ -34,9 +34,12 @@ export interface ExperienceData {
 
 export interface ProjectData {
   name: string;
+  client?: string;
   description: string;
   technologies: string;
-  link?: string;
+  developmentTools?: string;
+  teamSize?: string;
+  responsibilities?: string[];
 }
 
 export interface EducationData {
@@ -96,9 +99,12 @@ export const defaultResumeData: ResumeData = {
   projects: [
     {
       name: "",
+      client: "",
       description: "",
       technologies: "",
-      link: "",
+      developmentTools: "",
+      teamSize: "",
+      responsibilities: [""],
     },
   ],
   education: [
