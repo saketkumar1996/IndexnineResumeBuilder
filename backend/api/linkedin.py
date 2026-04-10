@@ -189,12 +189,12 @@ def _extract_json_from_response(content: str) -> Dict[str, Any]:
 
 @router.post("/parse-profile")
 async def parse_profile_with_ai(body: ParseProfileRequest):
-    """Use AI to extract resume data from pasted LinkedIn/profile text. Requires OPENAI_API_KEY."""
-    api_key = os.getenv("OPENAI_API_KEY")
+    """Use AI to extract resume data from pasted LinkedIn/profile text. Requires GROQ_API_KEY."""
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(
             status_code=503,
-            detail="AI parse is not configured. Set OPENAI_API_KEY in backend/.env",
+            detail="AI parse is not configured. Set GROQ_API_KEY in backend/.env",
         )
     if not (body.text or "").strip():
         raise HTTPException(status_code=400, detail="Request body must include non-empty 'text'.")
@@ -202,11 +202,12 @@ async def parse_profile_with_ai(body: ParseProfileRequest):
     try:
         from openai import OpenAI
 
-        # Use OpenRouter's API endpoint (compatible with OpenAI client)
-        base_url = os.getenv("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
+        # Use Groq's OpenAI-compatible API endpoint
+        base_url = os.getenv("OPENAI_API_BASE", "https://api.groq.com/openai/v1")
+        model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
         client = OpenAI(api_key=api_key, base_url=base_url)
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             messages=[
                 {"role": "system", "content": RESUME_SCHEMA_PROMPT},
                 {"role": "user", "content": body.text.strip()[:12000]},

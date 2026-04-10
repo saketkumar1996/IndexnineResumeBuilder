@@ -327,12 +327,12 @@ async def upload_resume(file: UploadFile = File(...)) -> Dict[str, Any]:
             detail="Invalid file type. Please upload a PDF or DOCX file."
         )
     
-    # Check if OpenAI API key is configured
-    api_key = os.getenv("OPENAI_API_KEY")
+    # Check if Groq API key is configured (fallback kept for compatibility)
+    api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(
             status_code=503,
-            detail="AI parse is not configured. Set OPENAI_API_KEY in backend/.env",
+            detail="AI parse is not configured. Set GROQ_API_KEY in backend/.env",
         )
     
     try:
@@ -354,11 +354,12 @@ async def upload_resume(file: UploadFile = File(...)) -> Dict[str, Any]:
         # Use AI to parse the extracted text
         from openai import OpenAI
         
-        base_url = os.getenv("OPENAI_API_BASE", "https://openrouter.ai/api/v1")
+        base_url = os.getenv("OPENAI_API_BASE", "https://api.groq.com/openai/v1")
+        model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
         client = OpenAI(api_key=api_key, base_url=base_url)
         
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             messages=[
                 {"role": "system", "content": RESUME_SCHEMA_PROMPT},
                 {"role": "user", "content": extracted_text.strip()[:12000]},
