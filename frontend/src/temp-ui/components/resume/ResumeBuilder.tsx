@@ -1,38 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  AlertCircle,
-  CheckCircle,
-  CheckSquare,
-  ChevronDown,
-  Cloud,
-  Copy,
-  Download,
-  FileText,
-  History,
-  LayoutTemplate,
-  Loader2,
-  LogIn,
-  LogOut,
-  Plus,
-  RotateCcw,
-  Save,
-  Sparkles,
-  Target,
-  Trash2,
-  Upload,
-  Wand2,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
-import {
-  ResumeData,
-  defaultResumeData,
-  sampleResumeData,
-  PROFESSIONAL_EXPERIENCE_BULLET_LIMIT,
-  PROJECT_EXPERIENCE_BULLET_LIMIT,
-} from "@/types/resume";
+import { Download, Sparkles, AlertCircle, CheckCircle, ZoomIn, ZoomOut, Upload } from "lucide-react";
+import { ResumeData, defaultResumeData, sampleResumeData } from "@/types/resume";
 import logoImage from "@/Black Logo.svg";
 import { ResumeSchema } from "@/schemas/resume";
 import { generatePDF } from "./ResumePDF";
@@ -352,29 +322,7 @@ export const ResumeBuilder = () => {
   const [isDocxExporting, setIsDocxExporting] = useState(false);
   const [previewScale, setPreviewScale] = useState(0.6);
   const [isUploading, setIsUploading] = useState(false);
-  const [cloudResumes, setCloudResumes] = useState<CloudResume[]>([]);
-  const [activeResumeId, setActiveResumeId] = useState<number | null>(null);
-  const [resumeTitle, setResumeTitle] = useState("Untitled Resume");
-  const [templateId, setTemplateId] = useState<TemplateId>("indexnine");
-  const [saveStatus, setSaveStatus] = useState("Loading workspace...");
-  const [isCreatingResume, setIsCreatingResume] = useState(false);
-  const [isSavingVersion, setIsSavingVersion] = useState(false);
-  const [showVersions, setShowVersions] = useState(false);
-  const [versions, setVersions] = useState<ResumeVersion[]>([]);
-  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
-  const [builderMode, setBuilderMode] = useState<BuilderMode>("full");
-  const [activeStep, setActiveStep] = useState<BuilderStep>("header");
-  const [jobDescription, setJobDescription] = useState("");
-  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
-  const [bulletText, setBulletText] = useState("");
-  const [bulletOptions, setBulletOptions] = useState<ImproveBulletResult["options"]>([]);
-  const [coverLetter, setCoverLetter] = useState("");
-  const [isMatching, setIsMatching] = useState(false);
-  const [isImproving, setIsImproving] = useState(false);
-  const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const hasBootstrappedRef = useRef(false);
-  const suppressCloudSaveRef = useRef(false);
 
   const form = useForm<ResumeData>({
     resolver: zodResolver(ResumeSchema),
@@ -509,6 +457,69 @@ export const ResumeBuilder = () => {
     return () => window.clearTimeout(timeout);
   }, [activeResumeId, isHydrated, resumeTitle, templateId, toast, watchedData]);
 
+  // Handle LinkedIn OAuth redirect with imported data from sessionStorage
+  useEffect(() => {
+    // Check for LinkedIn data from sign-in page
+    const linkedinData = sessionStorage.getItem("linkedin_data");
+    if (linkedinData) {
+      try {
+        const imported = JSON.parse(linkedinData) as ResumeData;
+        reset(imported);
+        setTimeout(() => {
+          trigger();
+        }, 0);
+        toast({
+          title: "LinkedIn data imported",
+          description: "Review and complete any missing fields before exporting.",
+        });
+        sessionStorage.removeItem("linkedin_data");
+      } catch (err) {
+        console.error("Failed to import LinkedIn data", err);
+        sessionStorage.removeItem("linkedin_data");
+      }
+    }
+
+    // Check for uploaded resume data from sign-in page
+    const uploadedData = sessionStorage.getItem("uploaded_resume_data");
+    if (uploadedData) {
+      try {
+        const extractedData = JSON.parse(uploadedData) as Partial<ResumeData>;
+        const current = watchedData;
+        const merged: ResumeData = {
+          ...defaultResumeData,
+          header: {
+            ...current.header,
+            ...(extractedData.header || {}),
+            fullName: (extractedData.header?.fullName || current.header.fullName) || "",
+            designation: (extractedData.header?.designation || current.header.designation) || "",
+            email: (extractedData.header?.email || current.header.email) || "",
+            phone: (extractedData.header?.phone || current.header.phone) || "",
+            location: (extractedData.header?.location || current.header.location) || "",
+          },
+          expertise: {
+            summary: (extractedData.expertise?.summary || current.expertise.summary) || "",
+            bulletPoints: (extractedData.expertise?.bulletPoints?.length ? extractedData.expertise.bulletPoints : current.expertise.bulletPoints) || [],
+          },
+          skills: { skills: (extractedData.skills?.skills || current.skills.skills) || "" },
+          experiences: (extractedData.experiences?.length ? extractedData.experiences : current.experiences) || [],
+          projects: (extractedData.projects?.length ? extractedData.projects : current.projects) || [],
+          education: (extractedData.education?.length ? extractedData.education : current.education) || [],
+          awards: (extractedData.awards?.length ? extractedData.awards : current.awards) || [],
+        };
+        reset(merged);
+        trigger();
+        toast({
+          title: "Resume uploaded successfully",
+          description: "Review and adjust any fields as needed.",
+        });
+        sessionStorage.removeItem("uploaded_resume_data");
+      } catch (err) {
+        console.error("Failed to import uploaded resume data", err);
+        sessionStorage.removeItem("uploaded_resume_data");
+      }
+    }
+  }, [reset, trigger, toast, watchedData]);
+
   const handleFillSampleData = () => {
     reset(sampleResumeData);
     trigger();
@@ -518,14 +529,16 @@ export const ResumeBuilder = () => {
     });
   };
 
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
     const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
     const validExtensions = [".pdf", ".docx"];
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf("."));
-
+    
     if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
       toast({
         title: "Invalid file type",
@@ -539,28 +552,60 @@ export const ResumeBuilder = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const extractedData = await uploadResume(formData);
-      const uploadedResumeData = normalizeUploadedResumeData(extractedData);
-      reset(uploadedResumeData);
-      setStoredResumeDraft(uploadedResumeData);
+
+      const res = await fetch("/api/upload-resume", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail));
+      }
+
+      const extractedData = (await res.json()) as Partial<ResumeData>;
+      const current = watchedData;
+      const merged: ResumeData = {
+        ...defaultResumeData,
+        header: {
+          ...current.header,
+          ...(extractedData.header || {}),
+          fullName: (extractedData.header?.fullName || current.header.fullName) || "",
+          designation: (extractedData.header?.designation || current.header.designation) || "",
+          email: (extractedData.header?.email || current.header.email) || "",
+          phone: (extractedData.header?.phone || current.header.phone) || "",
+          location: (extractedData.header?.location || current.header.location) || "",
+        },
+        expertise: {
+          summary: (extractedData.expertise?.summary || current.expertise.summary) || "",
+          bulletPoints: (extractedData.expertise?.bulletPoints?.length ? extractedData.expertise.bulletPoints : current.expertise.bulletPoints) || [],
+        },
+        skills: { skills: (extractedData.skills?.skills || current.skills.skills) || "" },
+        experiences: (extractedData.experiences?.length ? extractedData.experiences : current.experiences) || [],
+        projects: (extractedData.projects?.length ? extractedData.projects : current.projects) || [],
+        education: (extractedData.education?.length ? extractedData.education : current.education) || [],
+        awards: (extractedData.awards?.length ? extractedData.awards : current.awards) || [],
+      };
+      reset(merged);
       trigger();
       toast({
         title: "Resume uploaded successfully",
         description: "Review and adjust any fields as needed.",
       });
-    } catch (error) {
+    } catch (e) {
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to extract data from resume. Please try again.",
+        description: e instanceof Error ? e.message : "Failed to extract data from resume. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      // Reset file input
       event.target.value = "";
     }
   };
 
-  const handleExportPdf = async () => {
+  const handleExport = async () => {
     const isFormValid = await trigger();
     if (!isFormValid) {
       toast({
@@ -840,47 +885,6 @@ export const ResumeBuilder = () => {
                 <span>Ready</span>
               </div>
             )}
-            {signedInUser ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-10 px-2" aria-label="LinkedIn profile menu">
-                    <Avatar className="h-8 w-8">
-                      {signedInUser.picture && (
-                        <AvatarImage src={signedInUser.picture} alt={`${signedInUser.name || "LinkedIn"} profile`} />
-                      )}
-                      <AvatarFallback className="text-xs">
-                        {getInitials(signedInUser.name, signedInUser.email)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden max-w-32 truncate text-sm font-medium md:inline">
-                      {signedInUser.name || signedInUser.email || "LinkedIn"}
-                    </span>
-                    <ChevronDown size={16} className="hidden md:block" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuLabel>
-                    <div className="space-y-1">
-                      <p className="truncate text-sm font-medium">{signedInUser.name || "LinkedIn user"}</p>
-                      {signedInUser.email && (
-                        <p className="truncate text-xs font-normal text-muted-foreground">{signedInUser.email}</p>
-                      )}
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                    <LogOut size={16} className="mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={navigateToSignIn}>
-                <LogIn size={16} className="mr-2" />
-                Sign in
-              </Button>
-            )}
-
             <input
               ref={fileInputRef}
               type="file"
@@ -889,11 +893,22 @@ export const ResumeBuilder = () => {
               disabled={isUploading}
               className="hidden"
             />
-            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="hidden sm:flex">
-              {isUploading ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Upload size={16} className="mr-2" />}
-              {isUploading ? "Uploading" : "Upload"}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="hidden sm:flex"
+            >
+              <Upload size={16} className="mr-2" />
+              {isUploading ? "Uploading..." : "Upload Resume"}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleFillSampleData} className="hidden sm:flex">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleFillSampleData}
+              className="hidden sm:flex"
+            >
               <Sparkles size={16} className="mr-2" />
               Sample
             </Button>
@@ -913,26 +928,39 @@ export const ResumeBuilder = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-5">
-        <section className="mb-5 rounded-lg border border-border bg-card p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex min-w-[220px] flex-1 items-center gap-2">
-              <Cloud size={16} className="text-muted-foreground" />
-              <select
-                value={activeResumeId || ""}
-                onChange={(event) => handleSelectResume(Number(event.target.value))}
-                className="h-9 min-w-0 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                {cloudResumes.map(resume => (
-                  <option key={resume.id} value={resume.id}>{resume.title || "Untitled Resume"}</option>
-                ))}
-              </select>
-              <Input
-                value={resumeTitle}
-                onChange={(event) => setResumeTitle(event.target.value)}
-                className="h-9 min-w-[180px] flex-1"
-                aria-label="Resume title"
-              />
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-6">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+          {/* Form Panel */}
+          <div className="space-y-4 mb-8 lg:mb-0">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-serif text-2xl font-semibold text-foreground">
+                Resume Details
+              </h2>
+              <div className="flex gap-2 sm:hidden">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  <Upload size={16} className="mr-2" />
+                  {isUploading ? "..." : "Upload"}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleFillSampleData}>
+                  <Sparkles size={16} className="mr-2" />
+                  Sample
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
