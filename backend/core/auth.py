@@ -10,11 +10,25 @@ from fastapi import Depends, HTTPException, Request, Response
 from core.db import get_user_by_id
 
 
+_DEFAULT_SESSION_SECRET = "dev-indexnine-change-me"
+
 SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "indexnine_session")
-SESSION_SECRET = os.getenv("SESSION_SECRET", os.getenv("SECRET_KEY", "dev-indexnine-change-me"))
+SESSION_SECRET = os.getenv("SESSION_SECRET", os.getenv("SECRET_KEY", _DEFAULT_SESSION_SECRET))
 SESSION_MAX_AGE_SECONDS = int(os.getenv("SESSION_MAX_AGE_SECONDS", str(60 * 60 * 24 * 14)))
 SESSION_SECURE = os.getenv("SESSION_SECURE", "false").lower() == "true"
 SAME_SITE = os.getenv("SESSION_SAMESITE", "lax")
+
+# SESSION_SECURE=true and/or a real DATABASE_URL are the signals this project's own
+# deployment docs (ENV_SETUP.md) use to mean "this is a production deployment". If either
+# is set but the session-signing secret is still the publicly-known example default,
+# session cookies could be forged for any user id, so refuse to start rather than serve
+# traffic with a forgeable secret.
+if SESSION_SECRET == _DEFAULT_SESSION_SECRET and (SESSION_SECURE or os.getenv("DATABASE_URL", "").strip()):
+    raise RuntimeError(
+        "SESSION_SECRET is not set (or still the default 'dev-indexnine-change-me') while "
+        "SESSION_SECURE=true or DATABASE_URL is configured, which indicates a production-like "
+        "deployment. Set SESSION_SECRET to a long random value before starting the app."
+    )
 
 
 def _b64(value: bytes) -> str:

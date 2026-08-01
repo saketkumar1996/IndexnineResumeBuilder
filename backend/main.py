@@ -9,10 +9,17 @@ backend_dir = Path(__file__).resolve().parent
 load_dotenv(project_root / ".env")  # Try root first
 load_dotenv(backend_dir / ".env", override=False)  # Fall back to backend/.env if root doesn't exist
 
+import os
+from typing import List
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.endpoints import router as api_router
+from api.auth import router as auth_router
+from api.resumes import router as resumes_router
+from api.ai_tools import router as ai_router
 from api.linkedin import router as linkedin_router
+from core.db import init_db
 
 app = FastAPI(title="Indexnine Resume Builder API", version="1.0.0")
 
@@ -45,6 +52,9 @@ def startup_event():
 
 # Include API routes
 app.include_router(api_router, prefix="/api")
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(resumes_router, prefix="/api/resumes", tags=["resumes"])
+app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
 # LinkedIn OAuth: /api/linkedin/auth and /api/linkedin/callback
 app.include_router(linkedin_router, prefix="/api/linkedin", tags=["linkedin"])
 

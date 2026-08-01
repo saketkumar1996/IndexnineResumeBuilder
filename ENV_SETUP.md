@@ -83,6 +83,43 @@ This project uses environment variables for LinkedIn OAuth (automatic “Extract
 
 \*Required for the “Extract from LinkedIn” feature. \**Required for "Paste & extract with AI".
 
+## Sunday production setup
+
+Render backend:
+
+```env
+DATABASE_URL=<Render Postgres internal/external URL>
+SESSION_SECRET=<long random value>
+SESSION_SECURE=true
+SESSION_SAMESITE=none
+CORS_ORIGINS=https://<your-vercel-app>.vercel.app
+FRONTEND_REDIRECT_URL=https://<your-vercel-app>.vercel.app
+LINKEDIN_REDIRECT_URI=https://<your-render-api>.onrender.com/api/linkedin/callback
+OPENAI_API_KEY=<key>
+AI_MODEL=gpt-4o-mini
+```
+
+Vercel frontend:
+
+```env
+VITE_API_BASE_URL=https://<your-render-api>.onrender.com
+```
+
+LinkedIn app:
+
+- Add `https://<your-render-api>.onrender.com/api/linkedin/callback` to Authorized redirect URLs.
+- Keep the local callback too if you still test locally.
+
+Additional production variables:
+
+- `DATABASE_URL`: Render Postgres connection string. Local dev falls back to SQLite if omitted.
+- `SESSION_SECRET`: long random secret used to sign app session cookies.
+- `SESSION_SECURE=true`: required for HTTPS cookies in production.
+- `SESSION_SAMESITE=none`: required when Vercel and Render are on different domains.
+- `CORS_ORIGINS`: comma-separated allowed frontend origins, including the Vercel URL.
+- `OPENAI_API_BASE`: optional OpenAI-compatible base URL.
+- `AI_MODEL`: optional model override for SaaS AI endpoints.
+
 ## File locations
 
 - **Backend env file**: `backend/.env`  

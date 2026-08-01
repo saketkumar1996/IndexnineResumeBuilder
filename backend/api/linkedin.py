@@ -8,13 +8,17 @@ import base64
 import json
 import os
 import re
+import secrets
+from datetime import datetime, timezone
 from typing import Any, Optional, Dict
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
+from core.auth import set_session_cookie, SESSION_SECURE, SAME_SITE
+from core.db import create_resume, list_resumes, upsert_linkedin_user
 
 router = APIRouter()
 
@@ -27,6 +31,88 @@ LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 LINKEDIN_REDIRECT_URI = os.getenv("LINKEDIN_REDIRECT_URI")
 FRONTEND_REDIRECT_URL = os.getenv("FRONTEND_REDIRECT_URL", "http://localhost:3000")
 
+OAUTH_STATE_COOKIE_NAME = "linkedin_oauth_state"
+OAUTH_STATE_MAX_AGE_SECONDS = 600
+
+
+def _build_resume_data_from_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert LinkedIn userinfo into the frontend resume data shape."""
+    full_name = profile.get("name") or ""
+    if not full_name and (profile.get("given_name") or profile.get("family_name")):
+        full_name = f"{profile.get('given_name', '')} {profile.get('family_name', '')}".strip()
+
+    return {
+        "header": {
+            "fullName": full_name,
+            "designation": "Professional",
+            "email": profile.get("email") or "",
+            "phone": "",
+            "location": "",
+            "linkedin": "",
+            "github": "",
+            "portfolio": "",
+        },
+        "expertise": {"summary": "", "bulletPoints": []},
+        "skills": {"skills": ""},
+        "experiences": [],
+        "projects": [],
+        "education": [],
+        "awards": [],
+    }
+
+
+def _extract_profile_picture(profile: Dict[str, Any]) -> str:
+    """Return a profile picture URL from LinkedIn OIDC or legacy profile shapes."""
+    direct_picture = profile.get("picture") or profile.get("pictureUrl") or profile.get("profile_picture")
+    if isinstance(direct_picture, str):
+        return direct_picture
+
+    profile_picture = profile.get("profilePicture")
+    if not isinstance(profile_picture, dict):
+        return ""
+
+    display_image = profile_picture.get("displayImage~")
+    if not isinstance(display_image, dict):
+        return ""
+
+    elements = display_image.get("elements")
+    if not isinstance(elements, list):
+        return ""
+
+    for element in reversed(elements):
+        identifiers = element.get("identifiers") if isinstance(element, dict) else None
+        if not isinstance(identifiers, list):
+            continue
+        for identifier in identifiers:
+            url = identifier.get("identifier") if isinstance(identifier, dict) else None
+            if isinstance(url, str) and url:
+                return url
+
+    return ""
+
+
+def _build_linkedin_auth_payload(
+    profile: Dict[str, Any],
+    signed_in_at: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build the OAuth callback payload consumed by the frontend."""
+    resume_data = _build_resume_data_from_profile(profile)
+    return {
+        "profile": {
+            "provider": "linkedin",
+            "name": resume_data["header"]["fullName"],
+            "email": resume_data["header"]["email"],
+            "picture": _extract_profile_picture(profile),
+            "signedInAt": signed_in_at or datetime.now(timezone.utc).isoformat(),
+        },
+        "resumeData": resume_data,
+    }
+
+
+def _encode_redirect_payload(payload: Dict[str, Any]) -> str:
+    json_str = json.dumps(payload)
+    return base64.urlsafe_b64encode(json_str.encode("utf-8")).decode("ascii").rstrip("=")
+
 
 @router.get("/auth")
 async def linkedin_auth():
@@ -36,43 +122,66 @@ async def linkedin_auth():
             status_code=500,
             detail="LinkedIn OAuth is not configured. Set LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, and LINKEDIN_REDIRECT_URI.",
         )
-    # Use OpenID-style scopes now that OpenID is enabled
+    # Random per-request state, bound to the browser via a short-lived cookie, so the
+    # callback can reject codes/state that didn't originate from this browser's flow
+    # (prevents OAuth login-CSRF / session fixation).
+    state = secrets.token_urlsafe(24)
     params = {
         "response_type": "code",
         "client_id": LINKEDIN_CLIENT_ID,
         "redirect_uri": LINKEDIN_REDIRECT_URI,
         "scope": "openid profile email",
-        "state": "indexnine-resume",
+        "state": state,
     }
     auth_url = "https://www.linkedin.com/oauth/v2/authorization?" + urlencode(params)
-    return RedirectResponse(auth_url, status_code=302)
+    response = RedirectResponse(auth_url, status_code=302)
+    response.set_cookie(
+        OAUTH_STATE_COOKIE_NAME,
+        state,
+        max_age=OAUTH_STATE_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=SESSION_SECURE,
+        samesite=SAME_SITE,
+        path="/api/linkedin",
+    )
+    return response
 
 
 @router.get("/callback")
 async def linkedin_callback(
+    request: Request,
     code: Optional[str] = None,
     state: str = "",
     error: Optional[str] = None,
     error_description: Optional[str] = None,
 ):
     """Exchange code for token, fetch profile + email, redirect to frontend with encoded resume data."""
+    expected_state = request.cookies.get(OAUTH_STATE_COOKIE_NAME)
+
+    # Handle LinkedIn errors gracefully so we don't 422 on missing code
+    if error:
+        params = {"linkedin_error": error}
+        if error_description:
+            params["linkedin_error_description"] = error_description
+        if state:
+            params["state"] = state
+        response = RedirectResponse(f"{FRONTEND_REDIRECT_URL}/signin?{urlencode(params)}", status_code=302)
+        response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/linkedin")
+        return response
+
+    if not expected_state or not secrets.compare_digest(state or "", expected_state):
+        params = {
+            "linkedin_error": "invalid_state",
+            "linkedin_error_description": "OAuth state mismatch. Please try signing in again.",
+        }
+        response = RedirectResponse(f"{FRONTEND_REDIRECT_URL}/signin?{urlencode(params)}", status_code=302)
+        response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/linkedin")
+        return response
+
     if not (LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET and LINKEDIN_REDIRECT_URI):
         raise HTTPException(
             status_code=500,
             detail="LinkedIn OAuth is not configured. Set LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, and LINKEDIN_REDIRECT_URI.",
-        )
-
-    # Handle LinkedIn errors gracefully so we don't 422 on missing code
-    if error:
-        # Surface the LinkedIn error back to the frontend
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "message": "LinkedIn returned an error",
-                "error": error,
-                "error_description": error_description,
-                "state": state,
-            },
         )
 
     if not code:
@@ -105,37 +214,38 @@ async def linkedin_callback(
             userinfo_resp.raise_for_status()
             profile = userinfo_resp.json()
     except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Error communicating with LinkedIn: {str(e)}")
+        params = {"linkedin_error": "linkedin_request_failed", "linkedin_error_description": str(e)}
+        return RedirectResponse(f"{FRONTEND_REDIRECT_URL}/signin?{urlencode(params)}", status_code=302)
 
-    # UserInfo schema: sub, name, given_name, family_name, picture, locale, email (optional)
-    full_name = profile.get("name") or ""
-    if not full_name and (profile.get("given_name") or profile.get("family_name")):
-        full_name = f"{profile.get('given_name', '')} {profile.get('family_name', '')}".strip()
-    primary_email = profile.get("email") or ""
-    # UserInfo does not include headline; use a placeholder
-    designation = "Professional"
-    resume_data = {
-        "header": {
-            "fullName": full_name,
-            "designation": designation,
-            "email": primary_email,
-            "phone": "",
-            "location": "",
-            "linkedin": "",
-            "github": "",
-            "portfolio": "",
-        },
-        "expertise": {"summary": "", "bulletPoints": []},
-        "skills": {"skills": ""},
-        "experiences": [],
-        "projects": [],
-        "education": [],
-        "awards": [],
+    auth_payload = _build_linkedin_auth_payload(profile)
+    profile_for_db = {
+        **profile,
+        "picture": auth_payload["profile"]["picture"],
     }
-    json_str = json.dumps(resume_data)
-    encoded = base64.urlsafe_b64encode(json_str.encode("utf-8")).decode("ascii").rstrip("=")
-    redirect_url = f"{FRONTEND_REDIRECT_URL}/signin?linkedin_data={encoded}"
-    return RedirectResponse(redirect_url, status_code=302)
+    try:
+        user = upsert_linkedin_user(profile_for_db)
+        auth_payload["profile"]["id"] = user["id"]
+        existing_resumes = list_resumes(int(user["id"]))
+        if existing_resumes:
+            auth_payload["resumeId"] = existing_resumes[0]["id"]
+        else:
+            created_resume = create_resume(
+                int(user["id"]),
+                "LinkedIn Resume",
+                "indexnine",
+                auth_payload["resumeData"],
+            )
+            auth_payload["resumeId"] = created_resume["id"]
+    except Exception as e:
+        params = {"linkedin_error": "account_setup_failed", "linkedin_error_description": str(e)}
+        return RedirectResponse(f"{FRONTEND_REDIRECT_URL}/signin?{urlencode(params)}", status_code=302)
+
+    encoded = _encode_redirect_payload(auth_payload)
+    redirect_url = f"{FRONTEND_REDIRECT_URL}/signin?linkedin_auth={encoded}"
+    response = RedirectResponse(redirect_url, status_code=302)
+    set_session_cookie(response, int(user["id"]))
+    response.delete_cookie(OAUTH_STATE_COOKIE_NAME, path="/api/linkedin")
+    return response
 
 
 # --- AI-powered parse from pasted LinkedIn profile ---
