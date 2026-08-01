@@ -1,20 +1,28 @@
-import { ResumeData } from "@/types/resume";
+import { PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, PROJECT_EXPERIENCE_BULLET_LIMIT, ResumeData } from "@/types/resume";
 import { Linkedin, Github, Globe } from "lucide-react";
 import logoImage from "@/Black Logo.svg";
 
 interface ResumePreviewProps {
   data: ResumeData;
   scale?: number;
+  templateId?: "indexnine" | "ats" | "modern";
 }
 
-export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
-  const { header, expertise, skills, experiences, projects, education, awards } = data;
+const templateStyles = {
+  indexnine: { accent: "#2E9E5E", gray: "#4A4A4A", font: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" },
+  ats: { accent: "#111827", gray: "#1F2937", font: "Arial, sans-serif" },
+  modern: { accent: "#0F766E", gray: "#374151", font: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif" },
+};
+
+export const ResumePreview = ({ data, scale = 0.75, templateId = "indexnine" }: ResumePreviewProps) => {
+  const { header, expertise, skills, experiences, projects, education } = data;
+  const awards = data.awards || [];
 
   const hasContent = header.fullName || expertise.summary || skills.skills;
 
-  // Green color matching the PDF: #2E9E5E (a professional green)
-  const greenColor = "#2E9E5E";
-  const grayColor = "#4A4A4A";
+  const template = templateStyles[templateId] || templateStyles.indexnine;
+  const greenColor = template.accent;
+  const grayColor = template.gray;
 
   return (
     <div 
@@ -24,7 +32,7 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
         minHeight: `${11 * 96}px`,
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
-        fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+        fontFamily: template.font,
       }}
     >
       {!hasContent ? (
@@ -135,7 +143,7 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
           {experiences.length > 0 && experiences.some(e => e.company) && (
             <section className="mb-5">
               <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
-                EXPERIENCE
+                PROFESSIONAL EXPERIENCE
               </h2>
               <div className="space-y-3">
                 {experiences.filter(e => e.company).map((exp, index) => (
@@ -150,6 +158,13 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
                     <div className="text-[10px] text-gray-500">
                       {exp.startDate} - {exp.endDate || "Present"}
                     </div>
+                    {exp.responsibilities && exp.responsibilities.filter(r => r).length > 0 && (
+                      <ul className="list-disc list-outside ml-5 mt-1 space-y-1">
+                        {exp.responsibilities.filter(r => r).slice(0, PROFESSIONAL_EXPERIENCE_BULLET_LIMIT).map((resp, rIndex) => (
+                          <li key={rIndex} className="text-[10px] leading-relaxed">{resp}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>
@@ -160,7 +175,7 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
           {projects.length > 0 && projects.some(p => p.name) && (
             <section className="mb-5">
               <h2 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: greenColor }}>
-                PROJECT EXPERIENCE
+                SELECTED PROJECTS
               </h2>
               <div className="space-y-5">
                 {projects.filter(p => p.name).map((project, index) => (
@@ -194,9 +209,9 @@ export const ResumePreview = ({ data, scale = 0.75 }: ResumePreviewProps) => {
                     
                     {project.responsibilities && project.responsibilities.filter(r => r).length > 0 && (
                       <div className="mt-2">
-                        <p className="font-bold text-[10px] mb-1" style={{ color: greenColor }}>Responsibility:</p>
+                        <p className="font-bold text-[10px] mb-1" style={{ color: greenColor }}>Responsibilities:</p>
                         <ul className="list-disc list-outside ml-5 space-y-1">
-                          {project.responsibilities.filter(r => r).map((resp, rIndex) => (
+                          {project.responsibilities.filter(r => r).slice(0, PROJECT_EXPERIENCE_BULLET_LIMIT).map((resp, rIndex) => (
                             <li key={rIndex} className="text-[10px] leading-relaxed">{resp}</li>
                           ))}
                         </ul>

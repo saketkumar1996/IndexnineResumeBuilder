@@ -30,6 +30,7 @@ export interface ExperienceData {
   location: string;
   startDate: string;
   endDate?: string;
+  responsibilities?: string[];
 }
 
 export interface ProjectData {
@@ -37,6 +38,10 @@ export interface ProjectData {
   description: string;
   technologies: string;
   link?: string;
+  client?: string;
+  developmentTools?: string;
+  teamSize?: string;
+  responsibilities?: string[];
 }
 
 export interface EducationData {
@@ -64,6 +69,9 @@ export interface ResumeData {
   education: EducationData[];
   awards?: AwardData[];
 }
+
+export const PROFESSIONAL_EXPERIENCE_BULLET_LIMIT = 3;
+export const PROJECT_EXPERIENCE_BULLET_LIMIT = 2;
 
 // Default data structure
 export const defaultResumeData: ResumeData = {
@@ -172,11 +180,6 @@ export const sampleResumeData: ResumeData = {
       responsibilities: [
         "As an Angular developer, was responsible for developing new features, working on enhancements in existing features, and fixing bugs.",
         "Integrated libraries like CoreUI and AG-Grid to enhance UI, enabling advanced data table functionalities such as sorting, filtering, and pagination.",
-        "Responsible for migration from Angular v14 to v17 without breaking code and functionality.",
-        "I implemented NgRx for state management, caching API responses in the store to minimize redundant API calls and improve application performance.",
-        "Implemented unit tests using Jest to ensure reliable functionality and improve code coverage.",
-        "Followed the Agile methodology and participated in sprint planning, backlog grooming and retrospective.",
-        "Used confluence for documentation of features and API contract discussion.",
       ],
     },
     {
@@ -189,10 +192,6 @@ export const sampleResumeData: ResumeData = {
       responsibilities: [
         "As a senior frontend developer, my role involves collaborating with the team to design and develop user-friendly UI components using Angular and implementing functionalities.",
         "Additionally, I contribute to requirement analysis, feature development, bug fixing, and ensuring seamless integration between frontend and backend components.",
-        "Actively involved in feature discussion with customers as senior developer in the team.",
-        "Integrated D3.js to visualize and create interactive graphical representations of data, enhancing data insights and user experience.",
-        "Enhanced user experience by implementing lazy loading to minimize the initial bundle size and improve route-based module loading.",
-        "Used SonarQube to monitor and improve code quality, ensuring high maintainability and security compliance across the codebase.",
       ],
     },
     {
@@ -205,10 +204,6 @@ export const sampleResumeData: ResumeData = {
       responsibilities: [
         "Collaborate with designers and other stakeholders to understand the requirements and objectives for the redesign project.",
         "Worked on creation of angular components and angular tasks.",
-        "Conduct a thorough analysis of the existing application and its user interface to identify areas for improvement and optimization.",
-        "Integrated Google Calendar API/library to enable calendar functionalities within the application.",
-        "Improved API handling by using Angular resolvers to load data in advance of component rendering.",
-        "Design and implement new user interface designs that are visually appealing, intuitive, and optimized for user engagement and satisfaction.",
       ],
     },
   ],

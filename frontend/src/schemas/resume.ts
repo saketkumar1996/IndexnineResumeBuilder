@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, PROJECT_EXPERIENCE_BULLET_LIMIT } from '@/types/resume';
 
 // Emoji validation regex (matches backend pattern)
 const EMOJI_PATTERN = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2702}-\u{27B0}\u{24C2}-\u{1F251}]/u;
@@ -15,32 +16,7 @@ const validateWordCount = (value: string) => {
     return true; // Allow empty during editing
   }
   const wordCount = value.split(/\s+/).filter(word => word.length > 0).length;
-  if (wordCount < 80 || wordCount > 120) {
-    throw new Error(`Summary must be 80-120 words, got ${wordCount}`);
-  }
-  return true;
-};
-
-const validateMinResponsibilities = (responsibilities: string[]) => {
-  if (!responsibilities || responsibilities.length === 0) {
-    return true; // Allow empty during editing
-  }
-  
-  // Filter out empty responsibilities
-  const nonEmptyResponsibilities = responsibilities.filter(r => r && r.trim());
-  
-  if (nonEmptyResponsibilities.length > 0 && nonEmptyResponsibilities.length < 3) {
-    throw new Error('Minimum 3 responsibilities required');
-  }
-  
-  // Check each responsibility for emojis and empty values
-  for (const responsibility of nonEmptyResponsibilities) {
-    if (EMOJI_PATTERN.test(responsibility)) {
-      throw new Error('Responsibilities cannot contain emojis, icons, or graphics');
-    }
-  }
-  
-  return true;
+  return wordCount >= 80 && wordCount <= 120;
 };
 
 // Header Schema
@@ -140,6 +116,14 @@ export const ExperienceSchema = z.object({
     .refine(val => !val || /^[A-Za-z]{3} \d{4}$|^Present$/.test(val), {
       message: 'End date must be in MMM YYYY format (e.g., Apr 2024) or "Present"'
     })
+    .optional(),
+
+  responsibilities: z.array(z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Responsibilities cannot contain emojis, icons, or graphics'
+    })
+  )
+    .max(PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, `Use up to ${PROFESSIONAL_EXPERIENCE_BULLET_LIMIT} professional experience bullets`)
     .optional()
 });
 
@@ -149,6 +133,12 @@ export const ProjectSchema = z.object({
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Project name cannot contain emojis, icons, or graphics'
     }),
+
+  client: z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Client cannot contain emojis, icons, or graphics'
+    })
+    .optional(),
   
   description: z.string()
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
@@ -164,6 +154,26 @@ export const ProjectSchema = z.object({
     .refine(val => !val || /^https?:\/\/.+/.test(val), {
       message: 'Link must be a valid URL'
     })
+    .optional(),
+
+  developmentTools: z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Development tools cannot contain emojis, icons, or graphics'
+    })
+    .optional(),
+
+  teamSize: z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Team size cannot contain emojis, icons, or graphics'
+    })
+    .optional(),
+
+  responsibilities: z.array(z.string()
+    .refine(val => !val || !EMOJI_PATTERN.test(val), {
+      message: 'Responsibilities cannot contain emojis, icons, or graphics'
+    })
+  )
+    .max(PROJECT_EXPERIENCE_BULLET_LIMIT, `Use up to ${PROJECT_EXPERIENCE_BULLET_LIMIT} selected project bullets`)
     .optional()
 });
 

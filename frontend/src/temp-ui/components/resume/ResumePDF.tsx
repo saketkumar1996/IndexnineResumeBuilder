@@ -9,7 +9,7 @@ import {
   Image,
   pdf
 } from "@react-pdf/renderer";
-import { ResumeData } from "@/types/resume";
+import { PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, PROJECT_EXPERIENCE_BULLET_LIMIT, ResumeData } from "@/types/resume";
 import { 
   getCachedLogoDataUrl, 
   getCachedLinkedinIconDataUrl, 
@@ -36,8 +36,6 @@ Font.register({
 // Convert hex to RGB for React-PDF compatibility
 const greenColor = "#2E9E5E"; // rgb(46, 158, 94)
 const grayColor = "#4A4A4A"; // rgb(74, 74, 74)
-const grayLightColor = "#666666"; // rgb(102, 102, 102)
-
 const styles = StyleSheet.create({
   page: {
     paddingHorizontal: 48,
@@ -241,7 +239,8 @@ interface ResumePDFProps {
 }
 
 const ResumePDF = ({ data }: ResumePDFProps) => {
-  const { header, expertise, skills, experiences, projects, education, awards } = data;
+  const { header, expertise, skills, experiences, projects, education } = data;
+  const awards = data.awards || [];
 
   return (
     <Document>
@@ -330,7 +329,7 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
         {/* Experience */}
         {experiences.length > 0 && experiences.some(e => e.company) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>EXPERIENCE</Text>
+            <Text style={styles.sectionTitle}>PROFESSIONAL EXPERIENCE</Text>
             {experiences.filter(e => e.company).map((exp, index) => (
               <View key={index} style={styles.experienceEntry}>
                 <View style={styles.companyInfo}>
@@ -339,6 +338,16 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
                   <Text style={styles.jobTitle}> - {exp.title}</Text>
                 </View>
                 <Text style={styles.dateRange}>{exp.startDate} - {exp.endDate || "Present"}</Text>
+                {exp.responsibilities && exp.responsibilities.filter(r => r).length > 0 && (
+                  <View style={styles.bulletList}>
+                    {exp.responsibilities.filter(r => r).slice(0, PROFESSIONAL_EXPERIENCE_BULLET_LIMIT).map((resp, rIndex) => (
+                      <View key={rIndex} style={styles.bulletItem}>
+                        <Text style={styles.bullet}>-</Text>
+                        <Text style={styles.bulletText}>{resp}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -347,7 +356,7 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
         {/* Project Experience */}
         {projects.length > 0 && projects.some(p => p.name) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>PROJECT EXPERIENCE</Text>
+            <Text style={styles.sectionTitle}>SELECTED PROJECTS</Text>
             {projects.filter(p => p.name).map((project, index) => (
               <View key={index} style={styles.projectEntry}>
                 <Text>
@@ -383,11 +392,11 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
                 
                 {project.responsibilities && project.responsibilities.filter(r => r).length > 0 && (
                   <View>
-                    <Text style={styles.responsibilityTitle}>Responsibility:</Text>
+                    <Text style={styles.responsibilityTitle}>Responsibilities:</Text>
                     <View style={styles.bulletList}>
-                      {project.responsibilities.filter(r => r).map((resp, rIndex) => (
+                      {project.responsibilities.filter(r => r).slice(0, PROJECT_EXPERIENCE_BULLET_LIMIT).map((resp, rIndex) => (
                         <View key={rIndex} style={styles.bulletItem}>
-                          <Text style={styles.bullet}>•</Text>
+                          <Text style={styles.bullet}>-</Text>
                           <Text style={styles.bulletText}>{resp}</Text>
                         </View>
                       ))}
@@ -439,10 +448,10 @@ const ResumePDF = ({ data }: ResumePDFProps) => {
   );
 };
 
-export const generatePDF = async (data: ResumeData): Promise<Blob> => {
+export const generatePDF = async (data: ResumeData, templateId: "indexnine" | "ats" | "modern" = "indexnine"): Promise<Blob> => {
   // Pre-compute all image data URLs before rendering
   // This ensures icons and logo are ready when the PDF is generated
-  const greenColor = '#2E9E5E';
+  const greenColor = templateId === "ats" ? "#111827" : templateId === "modern" ? "#0F766E" : "#2E9E5E";
   
   // Reset to null first
   logoDataUrl = null;

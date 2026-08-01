@@ -54,12 +54,12 @@ const invalidSkillsNoCommas = fc.array(
 
 const validResponsibilities = fc.array(
   cleanText.filter(s => s.length >= 10),
-  { minLength: 3, maxLength: 8 }
+  { minLength: 0, maxLength: 3 }
 );
 
-const invalidResponsibilities = fc.array(
-  cleanText,
-  { minLength: 0, maxLength: 2 }
+const excessiveResponsibilities = fc.array(
+  cleanText.filter(s => s.length >= 10),
+  { minLength: 4, maxLength: 8 }
 );
 
 describe('Header Schema Validation', () => {
@@ -250,8 +250,8 @@ describe('Experience Schema Validation', () => {
       cleanText,
       cleanText,
       cleanText,
-      fc.stringMatching(/^\d{2}\/\d{4}$/),
-      fc.oneof(fc.stringMatching(/^\d{2}\/\d{4}$/), fc.constant('Present')),
+      validDateFormat,
+      validEndDate,
       validResponsibilities,
       (company, title, location, startDate, endDate, responsibilities) => {
         const result = ExperienceSchema.safeParse({
@@ -267,22 +267,20 @@ describe('Experience Schema Validation', () => {
     ));
   });
 
-  it('should reject experience with insufficient responsibilities', () => {
+  it('should reject experience with more than three responsibilities', () => {
     fc.assert(fc.property(
-      invalidResponsibilities,
+      excessiveResponsibilities,
       (responsibilities) => {
         const result = ExperienceSchema.safeParse({
           company: 'Tech Corp',
-          position: 'Developer',
-          start_date: 'JAN 2020',
-          end_date: 'Present',
+          title: 'Developer',
+          location: 'San Francisco, CA',
+          startDate: 'JAN 2020',
+          endDate: 'Present',
           responsibilities
         });
         
-        if (responsibilities.filter(r => r.trim()).length > 0 && 
-            responsibilities.filter(r => r.trim()).length < 3) {
-          expect(result.success).toBe(false);
-        }
+        expect(result.success).toBe(false);
       }
     ));
   });
@@ -309,7 +307,7 @@ describe('Experience Schema Validation', () => {
       company: 'Tech Corp',
       title: 'Developer',
       location: 'San Francisco, CA',
-      startDate: '01/2020',
+      startDate: 'JAN 2020',
       endDate: 'Present',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     });
@@ -321,7 +319,7 @@ describe('Experience Schema Validation', () => {
       title: 'Developer',
       location: 'San Francisco, CA',
       startDate: 'Present',
-      endDate: '12/2020',
+      endDate: 'DEC 2020',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     });
     expect(invalidResult.success).toBe(false);
@@ -359,6 +357,17 @@ describe('Project Schema Validation', () => {
         expect(result.success).toBe(false);
       }
     ));
+  });
+
+  it('should reject project data with more than two responsibilities', () => {
+    const result = ProjectSchema.safeParse({
+      name: 'Selected Project',
+      description: 'A great project',
+      technologies: 'Python, React',
+      responsibilities: ['Task 1', 'Task 2', 'Task 3']
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

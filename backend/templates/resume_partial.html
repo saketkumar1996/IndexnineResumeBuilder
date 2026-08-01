@@ -114,7 +114,7 @@
         </div>
 
         <!-- Experience Section -->
-        <div class="section-header">EXPERIENCE</div>
+        <div class="section-header">PROFESSIONAL EXPERIENCE</div>
         <div class="section-content">
             {% if data.experience and data.experience|length > 0 %}
                 {% for exp in data.experience %}
@@ -123,10 +123,10 @@
                     <div style="font-style: italic;">{{ exp.start_date or 'Start Date' }} - {{ exp.end_date or 'End Date' }}</div>
                     {% if exp.responsibilities %}
                         {% for resp in exp.responsibilities %}
-                        <div style="margin-left: 12pt;">• {{ resp }}</div>
+                        {% if loop.index <= 3 %}
+                        <div style="margin-left: 12pt;">- {{ resp }}</div>
+                        {% endif %}
                         {% endfor %}
-                    {% else %}
-                        <div class="placeholder" style="margin-left: 12pt;">Responsibilities will appear here (minimum 3 required)</div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -136,7 +136,7 @@
         </div>
 
         <!-- Project Experience Section -->
-        <div class="section-header">PROJECT EXPERIENCE</div>
+        <div class="section-header">SELECTED PROJECTS</div>
         <div class="section-content">
             {% if data.projects and data.projects|length > 0 %}
                 {% for project in data.projects %}
@@ -145,6 +145,13 @@
                     <div style="font-style: italic;">{{ project.start_date or 'Start Date' }} - {{ project.end_date or 'End Date' }}</div>
                     <div>{{ project.description or 'Project description will appear here' }}</div>
                     <div><strong>Technologies:</strong> {{ project.technologies or 'Technologies used' }}</div>
+                    {% if project.responsibilities %}
+                        {% for resp in project.responsibilities %}
+                        {% if loop.index <= 2 %}
+                        <div style="margin-left: 12pt;">- {{ resp }}</div>
+                        {% endif %}
+                        {% endfor %}
+                    {% endif %}
                 </div>
                 {% endfor %}
             {% else %}

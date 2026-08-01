@@ -1,7 +1,7 @@
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
-import { ResumeData } from "@/types/resume";
-import { TextInput } from "./FormField";
+import { PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, ResumeData } from "@/types/resume";
+import { TextAreaInput, TextInput } from "./FormField";
 import { Button } from "@/temp-ui/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,21 @@ export const ExperienceSection = ({ form }: ExperienceSectionProps) => {
   });
 
   const experiences = watch("experiences");
+
+  const addResponsibility = (experienceIndex: number) => {
+    const currentResponsibilities = experiences[experienceIndex]?.responsibilities || [];
+    if (currentResponsibilities.length >= PROFESSIONAL_EXPERIENCE_BULLET_LIMIT) return;
+    setValue(`experiences.${experienceIndex}.responsibilities`, [...currentResponsibilities, ""], { shouldValidate: true });
+  };
+
+  const removeResponsibility = (experienceIndex: number, responsibilityIndex: number) => {
+    const currentResponsibilities = experiences[experienceIndex]?.responsibilities || [];
+    setValue(
+      `experiences.${experienceIndex}.responsibilities`,
+      currentResponsibilities.filter((_, index) => index !== responsibilityIndex),
+      { shouldValidate: true }
+    );
+  };
 
   const addExperience = () => {
     append({
@@ -98,6 +113,51 @@ export const ExperienceSection = ({ form }: ExperienceSectionProps) => {
                 error={errors.experiences?.[index]?.endDate?.message}
                 placeholder="Present"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Responsibilities
+              </label>
+
+              {experiences[index]?.responsibilities?.slice(0, PROFESSIONAL_EXPERIENCE_BULLET_LIMIT).map((responsibility, responsibilityIndex) => (
+                <div key={responsibilityIndex} className="flex gap-2">
+                  <TextAreaInput
+                    label=""
+                    value={responsibility}
+                    onChange={(value) => {
+                      const newResponsibilities = [...(experiences[index]?.responsibilities || [])].slice(0, PROFESSIONAL_EXPERIENCE_BULLET_LIMIT);
+                      newResponsibilities[responsibilityIndex] = value;
+                      setValue(`experiences.${index}.responsibilities`, newResponsibilities, { shouldValidate: true });
+                    }}
+                    error={errors.experiences?.[index]?.responsibilities?.[responsibilityIndex]?.message}
+                    placeholder="Describe an achievement or responsibility"
+                    rows={2}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeResponsibility(index, responsibilityIndex)}
+                    className="text-muted-foreground hover:text-destructive shrink-0 mt-1"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              ))}
+
+              {(experiences[index]?.responsibilities?.length || 0) < PROFESSIONAL_EXPERIENCE_BULLET_LIMIT && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => addResponsibility(index)}
+                  className="text-muted-foreground"
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add responsibility
+                </Button>
+              )}
             </div>
           </motion.div>
         ))}

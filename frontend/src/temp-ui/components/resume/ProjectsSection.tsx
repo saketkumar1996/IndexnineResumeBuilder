@@ -1,6 +1,6 @@
 import { UseFormReturn, useFieldArray } from "react-hook-form";
 import { Plus, Trash2 } from "lucide-react";
-import { ResumeData } from "@/types/resume";
+import { PROJECT_EXPERIENCE_BULLET_LIMIT, ResumeData } from "@/types/resume";
 import { TextInput, TextAreaInput } from "./FormField";
 import { Button } from "@/temp-ui/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +20,7 @@ export const ProjectsSection = ({ form }: ProjectsSectionProps) => {
 
   const addResponsibility = (projectIndex: number) => {
     const currentResp = projects[projectIndex]?.responsibilities || [];
+    if (currentResp.length >= PROJECT_EXPERIENCE_BULLET_LIMIT) return;
     setValue(`projects.${projectIndex}.responsibilities`, [...currentResp, ""], { shouldValidate: true });
   };
 
@@ -122,13 +123,13 @@ export const ProjectsSection = ({ form }: ProjectsSectionProps) => {
                 Describe your role and contributions to this project
               </p>
 
-              {projects[index]?.responsibilities?.map((resp, respIndex) => (
+              {projects[index]?.responsibilities?.slice(0, PROJECT_EXPERIENCE_BULLET_LIMIT).map((resp, respIndex) => (
                 <div key={respIndex} className="flex gap-2">
                   <TextAreaInput
                     label=""
                     value={resp}
                     onChange={(value) => {
-                      const newResp = [...(projects[index]?.responsibilities || [])];
+                      const newResp = [...(projects[index]?.responsibilities || [])].slice(0, PROJECT_EXPERIENCE_BULLET_LIMIT);
                       newResp[respIndex] = value;
                       setValue(`projects.${index}.responsibilities`, newResp, { shouldValidate: true });
                     }}
@@ -148,7 +149,7 @@ export const ProjectsSection = ({ form }: ProjectsSectionProps) => {
                 </div>
               ))}
 
-              {(projects[index]?.responsibilities?.length || 0) < 10 && (
+              {(projects[index]?.responsibilities?.length || 0) < PROJECT_EXPERIENCE_BULLET_LIMIT && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -176,7 +177,7 @@ export const ProjectsSection = ({ form }: ProjectsSectionProps) => {
             technologies: "", 
             developmentTools: "",
             teamSize: "",
-            responsibilities: [""] 
+            responsibilities: [] 
           })}
           className="w-full"
         >

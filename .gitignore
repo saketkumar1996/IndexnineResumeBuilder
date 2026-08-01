@@ -47,6 +47,7 @@ nosetests.xml
 
 # Logs
 logs
+backend/ai_output_logs/
 *.log
 npm-debug.log*
 yarn-debug.log*

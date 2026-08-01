@@ -50,6 +50,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock HTMLElement.scrollIntoView
 HTMLElement.prototype.scrollIntoView = vi.fn();
+window.scrollTo = vi.fn();
 
 // Global test utilities
 export const createMockResumeData = () => ({

@@ -101,16 +101,12 @@ class ExperienceModel(BaseModel):
     position: str = Field(..., min_length=1, max_length=100)
     start_date: str = Field(..., pattern=r'^[A-Z]{3} \d{4}$')
     end_date: Optional[str] = Field(None, pattern=r'^[A-Z]{3} \d{4}$|^Present$')
-    responsibilities: List[str] = Field(..., min_length=3)
+    responsibilities: List[str] = Field(default_factory=list)
     
     @field_validator('responsibilities')
     @classmethod
     def validate_responsibilities(cls, v):
-        """Ensure minimum 3 responsibilities and bullet-point format"""
-        if len(v) < 3:
-            raise ValueError('Minimum 3 responsibilities required')
-        
-        # Validate bullet-point format and no emojis
+        """Validate optional bullet-point responsibilities."""
         emoji_pattern = re.compile(
             "["
             "\U0001F600-\U0001F64F"
@@ -125,7 +121,6 @@ class ExperienceModel(BaseModel):
         for responsibility in v:
             if emoji_pattern.search(responsibility):
                 raise ValueError('Responsibilities cannot contain emojis, icons, or graphics')
-            # Each responsibility should be suitable for bullet-point format
             if not responsibility.strip():
                 raise ValueError('Responsibilities cannot be empty')
         
