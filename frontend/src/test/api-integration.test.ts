@@ -119,7 +119,7 @@ describe('API Integration Tests', () => {
       location: 'San Francisco, CA'
     },
     expertise: {
-      summary: 'Too short' // < 80 words
+      summary: 'Too short' // < 50 words
     },
     skills: {
       skills: 'Python JavaScript React' // No commas
@@ -176,7 +176,7 @@ describe('API Integration Tests', () => {
         },
         {
           field: 'expertise.summary',
-          message: 'Summary must be 80-120 words, got 2',
+          message: 'Summary must be 50-200 words, got 2',
           type: 'value_error',
           spec_reference: 'Requirements 2.3'
         },

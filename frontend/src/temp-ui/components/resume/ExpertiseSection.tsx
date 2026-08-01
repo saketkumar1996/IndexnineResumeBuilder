@@ -16,8 +16,8 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
   const wordCount = summaryValue.split(/\s+/).filter(word => word.length > 0).length;
   
   const getWordCountColor = () => {
-    if (wordCount < 80) return 'text-destructive';
-    if (wordCount > 120) return 'text-destructive';
+    if (wordCount < 50) return 'text-destructive';
+    if (wordCount > 200) return 'text-destructive';
     return 'text-green-600';
   };
 
@@ -49,7 +49,7 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
             Professional Summary *
           </label>
           <span className={`text-sm ${getWordCountColor()}`}>
-            {wordCount}/80-120 words
+            {wordCount}/50-200 words
           </span>
         </div>
         <TextAreaInput
@@ -57,13 +57,13 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
           value={expertise.summary || ""}
           onChange={(value) => setValue("expertise.summary", value, { shouldValidate: true })}
           error={errors.expertise?.summary?.message}
-          placeholder="Write a compelling professional summary that highlights your key skills, experience, and achievements. This should be between 80-120 words and provide a clear overview of your professional background and what you bring to potential employers."
+          placeholder="Write a compelling professional summary that highlights your key skills, experience, and achievements. This should be between 50-200 words and provide a clear overview of your professional background and what you bring to potential employers."
           rows={6}
         />
         <div className="text-xs text-muted-foreground">
           <p>Requirements:</p>
           <ul className="list-disc list-inside ml-2">
-            <li>Must be between 80-120 words</li>
+            <li>Must be between 50-200 words</li>
             <li>No emojis, icons, or graphics allowed</li>
             <li>Focus on professional achievements and skills</li>
           </ul>

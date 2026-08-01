@@ -118,7 +118,7 @@ class TestFullResumeIntegration:
                 "location": "San Francisco, CA"
             },
             "expertise": {
-                "summary": "Too short summary"  # < 80 words
+                "summary": "Too short summary"  # < 50 words
             },
             "skills": {
                 "skills": "Python JavaScript React"  # No commas

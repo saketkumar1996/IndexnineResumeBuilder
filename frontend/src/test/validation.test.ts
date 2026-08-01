@@ -34,12 +34,12 @@ const textWithEmojis = fc.string({ minLength: 5, maxLength: 50 })
 
 const validWordCountSummary = fc.array(
   fc.string({ minLength: 2, maxLength: 12 }).filter(s => s.trim().length > 0),
-  { minLength: 80, maxLength: 120 }
+  { minLength: 50, maxLength: 200 }
 ).map(words => words.join(' '));
 
 const invalidWordCountSummary = fc.oneof(
-  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 1, maxLength: 79 }),
-  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 121, maxLength: 200 })
+  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 1, maxLength: 49 }),
+  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 201, maxLength: 280 })
 ).map(words => words.join(' '));
 
 const validCommaSeparatedSkills = fc.array(
@@ -181,25 +181,25 @@ describe('Expertise Schema Validation', () => {
   });
 
   it('should validate exact word count boundaries', () => {
-    // Exactly 80 words should be valid
-    const words80 = Array(80).fill('word').join(' ');
-    const result80 = ExpertiseSchema.safeParse({ summary: words80 });
-    expect(result80.success).toBe(true);
+    // Exactly 50 words should be valid
+    const words50 = Array(50).fill('word').join(' ');
+    const result50 = ExpertiseSchema.safeParse({ summary: words50 });
+    expect(result50.success).toBe(true);
 
-    // Exactly 120 words should be valid
-    const words120 = Array(120).fill('word').join(' ');
-    const result120 = ExpertiseSchema.safeParse({ summary: words120 });
-    expect(result120.success).toBe(true);
+    // Exactly 200 words should be valid
+    const words200 = Array(200).fill('word').join(' ');
+    const result200 = ExpertiseSchema.safeParse({ summary: words200 });
+    expect(result200.success).toBe(true);
 
-    // 79 words should be invalid
-    const words79 = Array(79).fill('word').join(' ');
-    const result79 = ExpertiseSchema.safeParse({ summary: words79 });
-    expect(result79.success).toBe(false);
+    // 49 words should be invalid
+    const words49 = Array(49).fill('word').join(' ');
+    const result49 = ExpertiseSchema.safeParse({ summary: words49 });
+    expect(result49.success).toBe(false);
 
-    // 121 words should be invalid
-    const words121 = Array(121).fill('word').join(' ');
-    const result121 = ExpertiseSchema.safeParse({ summary: words121 });
-    expect(result121.success).toBe(false);
+    // 201 words should be invalid
+    const words201 = Array(201).fill('word').join(' ');
+    const result201 = ExpertiseSchema.safeParse({ summary: words201 });
+    expect(result201.success).toBe(false);
   });
 });
 

@@ -157,7 +157,7 @@ const isAllDataFilled = (data: ResumeData): boolean => {
   }
 
   const summaryWordCount = data.expertise?.summary?.split(/\s+/).filter(Boolean).length || 0;
-  if (summaryWordCount < 80 || summaryWordCount > 120) return false;
+  if (summaryWordCount < 50 || summaryWordCount > 200) return false;
   if (!data.skills?.skills?.trim()) return false;
 
   const hasValidExperience = data.experiences?.some(exp =>
@@ -310,7 +310,7 @@ const buildChecklist = (data: ResumeData) => {
     {
       id: "expertise" as BuilderStep,
       label: "Summary",
-      done: summaryWordCount >= 80 && summaryWordCount <= 120,
+      done: summaryWordCount >= 50 && summaryWordCount <= 200,
     },
     {
       id: "skills" as BuilderStep,

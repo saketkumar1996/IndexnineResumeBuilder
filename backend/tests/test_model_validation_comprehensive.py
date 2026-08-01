@@ -68,32 +68,32 @@ class TestComprehensiveModelValidation:
     
     def test_expertise_model_word_count_boundaries(self):
         """Test ExpertiseModel word count validation boundaries"""
-        # Exactly 80 words - should pass
-        words_80 = " ".join(["word"] * 80)
-        expertise_80 = ExpertiseModel(summary=words_80)
-        assert len(expertise_80.summary.split()) == 80
-        
-        # Exactly 120 words - should pass
-        words_120 = " ".join(["word"] * 120)
-        expertise_120 = ExpertiseModel(summary=words_120)
-        assert len(expertise_120.summary.split()) == 120
-        
-        # 79 words - should fail
-        words_79 = " ".join(["word"] * 79)
+        # Exactly 50 words - should pass
+        words_50 = " ".join(["word"] * 50)
+        expertise_50 = ExpertiseModel(summary=words_50)
+        assert len(expertise_50.summary.split()) == 50
+
+        # Exactly 200 words - should pass
+        words_200 = " ".join(["word"] * 200)
+        expertise_200 = ExpertiseModel(summary=words_200)
+        assert len(expertise_200.summary.split()) == 200
+
+        # 49 words - should fail
+        words_49 = " ".join(["word"] * 49)
         with pytest.raises(ValidationError) as exc_info:
-            ExpertiseModel(summary=words_79)
-        assert "79" in str(exc_info.value)
-        
-        # 121 words - should fail
-        words_121 = " ".join(["word"] * 121)
+            ExpertiseModel(summary=words_49)
+        assert "49" in str(exc_info.value)
+
+        # 201 words - should fail
+        words_201 = " ".join(["word"] * 201)
         with pytest.raises(ValidationError) as exc_info:
-            ExpertiseModel(summary=words_121)
-        assert "121" in str(exc_info.value)
-        
+            ExpertiseModel(summary=words_201)
+        assert "201" in str(exc_info.value)
+
         # Test with irregular spacing
         irregular_spacing = "word  word   word    " * 30  # Should still count correctly
         word_count = len(irregular_spacing.split())
-        if 80 <= word_count <= 120:
+        if 50 <= word_count <= 200:
             expertise = ExpertiseModel(summary=irregular_spacing)
             assert expertise.summary == irregular_spacing
         else:
@@ -359,7 +359,7 @@ class TestComprehensiveModelValidation:
                 "location": "San Francisco, CA"
             },
             "expertise": {
-                "summary": " ".join(["word"] * 90)
+                "summary": " ".join(["word"] * 50)
             },
             "skills": {
                 "skills": "Python, JavaScript, React, Node.js"

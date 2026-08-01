@@ -89,12 +89,12 @@ class TestEmojiRejectionValidation:
         """Expertise summary should reject emojis"""
         # Create a summary with proper word count but containing emojis
         words = emoji_text.split()
-        if len(words) < 80:
+        if len(words) < 50:
             # Pad with clean words to meet word count requirement
             clean_words = ["experienced", "professional", "developer", "technology", "solutions"] * 20
-            words.extend(clean_words[:80 - len(words)])
-        elif len(words) > 120:
-            words = words[:120]
+            words.extend(clean_words[:50 - len(words)])
+        elif len(words) > 200:
+            words = words[:200]
         
         emoji_summary = " ".join(words)
         

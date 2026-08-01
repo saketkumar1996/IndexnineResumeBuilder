@@ -83,7 +83,7 @@ class TestValidationEndpoint:
                 "location": "San Francisco, CA"
             },
             "expertise": {
-                "summary": "Too short"  # Invalid word count (< 80 words)
+                "summary": "Too short"  # Invalid word count (< 50 words)
             },
             "skills": {
                 "skills": "Python JavaScript React"  # Missing comma separation

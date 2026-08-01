@@ -349,7 +349,7 @@ Return ONLY valid JSON (no markdown, no code fences, no explanation). Use this e
     "portfolio": "string or empty"
   },
   "expertise": {
-    "summary": "string, 80-120 words professional summary",
+    "summary": "string, 50-200 words professional summary",
     "bulletPoints": ["string", "string"]
   },
   "skills": { "skills": "comma-separated string" },

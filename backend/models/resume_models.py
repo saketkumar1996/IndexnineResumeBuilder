@@ -38,10 +38,10 @@ class ExpertiseModel(BaseModel):
     @field_validator('summary')
     @classmethod
     def validate_word_count(cls, v):
-        """Enforce 80-120 word count requirement"""
+        """Enforce 50-200 word count requirement"""
         word_count = len(v.split())
-        if not 80 <= word_count <= 120:
-            raise ValueError(f'Summary must be 80-120 words, got {word_count}')
+        if not 50 <= word_count <= 200:
+            raise ValueError(f'Summary must be 50-200 words, got {word_count}')
         return v
     
     @field_validator('summary')

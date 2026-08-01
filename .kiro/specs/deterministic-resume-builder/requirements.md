@@ -36,7 +36,7 @@ The Indexnine Resume Builder is a spec-driven system that generates company-comp
 
 1. THE Validation_Engine SHALL enforce uppercase headings for all sections
 2. THE Validation_Engine SHALL require date format MMM YYYY for all date fields
-3. THE Validation_Engine SHALL validate expertise summary length between 80-120 words
+3. THE Validation_Engine SHALL validate expertise summary length between 50-200 words
 4. THE Validation_Engine SHALL require minimum 3 responsibilities per experience entry
 5. THE Validation_Engine SHALL reject any content containing emojis, icons, or graphics
 6. WHEN validation fails, THE Validation_Engine SHALL return clear, section-specific error messages

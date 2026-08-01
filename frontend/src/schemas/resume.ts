@@ -16,7 +16,7 @@ const validateWordCount = (value: string) => {
     return true; // Allow empty during editing
   }
   const wordCount = value.split(/\s+/).filter(word => word.length > 0).length;
-  return wordCount >= 80 && wordCount <= 120;
+  return wordCount >= 50 && wordCount <= 200;
 };
 
 // Header Schema
@@ -70,7 +70,7 @@ export const HeaderSchema = z.object({
 export const ExpertiseSchema = z.object({
   summary: z.string()
     .refine(validateWordCount, {
-      message: 'Summary must be 80-120 words'
+      message: 'Summary must be 50-200 words'
     })
     .refine(val => !val || !EMOJI_PATTERN.test(val), {
       message: 'Summary cannot contain emojis, icons, or graphics'

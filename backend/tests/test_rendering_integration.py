@@ -246,7 +246,7 @@ class TestResumeRendering:
                 "location": "San Francisco, CA"
             },
             "expertise": {
-                "summary": "Too short"  # Invalid
+                "summary": "Too short"  # Incomplete data for partial rendering
             }
         }
         

@@ -113,13 +113,13 @@ class HeaderModel(BaseModel):
     location: str = Field(..., min_length=1, max_length=100)
 
 class ExpertiseModel(BaseModel):
-    summary: str = Field(..., min_length=80, max_length=120)
+    summary: str = Field(..., min_length=50, max_length=200)
     
     @validator('summary')
     def validate_word_count(cls, v):
         word_count = len(v.split())
-        if not 80 <= word_count <= 120:
-            raise ValueError(f'Summary must be 80-120 words, got {word_count}')
+        if not 50 <= word_count <= 200:
+            raise ValueError(f'Summary must be 50-200 words, got {word_count}')
         return v
 
 class ExperienceModel(BaseModel):
@@ -278,7 +278,7 @@ Based on the prework analysis and property reflection, the following properties 
 **Validates: Requirements 2.2**
 
 **Property 5: Expertise summary word count validation**
-*For any* expertise summary text, the validation engine should accept only summaries between 80-120 words and reject summaries outside this range
+*For any* expertise summary text, the validation engine should accept only summaries between 50-200 words and reject summaries outside this range
 **Validates: Requirements 2.3**
 
 **Property 6: Experience responsibilities validation**
@@ -344,7 +344,7 @@ Based on the prework analysis and property reflection, the following properties 
   "errors": [
     {
       "field": "expertise.summary",
-      "message": "Summary must be 80-120 words, got 65",
+      "message": "Summary must be 50-200 words, got 35",
       "code": "WORD_COUNT_VIOLATION",
       "spec_reference": "Requirements 2.3"
     }

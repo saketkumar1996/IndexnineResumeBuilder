@@ -6,7 +6,7 @@ This document outlines the comprehensive test suite for the Indexnine Resume Bui
 
 ### Property-Based Tests
 - **`test_property_date_validation.py`** - Tests MMM YYYY date format validation across all models using Hypothesis
-- **`test_property_expertise_validation.py`** - Tests 80-120 word count validation for expertise summaries
+- **`test_property_expertise_validation.py`** - Tests 50-200 word count validation for expertise summaries
 - **`test_property_skills_validation.py`** - Tests comma-separated format validation for skills
 - **`test_property_responsibilities_validation.py`** - Tests minimum 3 responsibilities requirement
 - **`test_property_emoji_validation.py`** - Tests emoji/icon/graphics rejection across all text fields
@@ -21,7 +21,7 @@ This document outlines the comprehensive test suite for the Indexnine Resume Bui
 
 #### Validation Rules Tested
 1. **Date Format Validation** - MMM YYYY format, Present for end dates only
-2. **Word Count Validation** - 80-120 words for expertise summaries
+2. **Word Count Validation** - 50-200 words for expertise summaries
 3. **Format Validation** - Comma-separated skills, email/phone formats
 4. **Content Validation** - Minimum responsibilities count, emoji rejection
 5. **Length Constraints** - Field length limits across all models
@@ -121,7 +121,7 @@ npm run test:watch              # Watch mode
 - Malformed API requests
 
 ### Edge Cases
-- Boundary conditions (79/80/120/121 words)
+- Boundary conditions (49/50/200/201 words)
 - Special characters and Unicode handling
 - Network errors and timeout scenarios
 - Large file handling and performance
