@@ -8,19 +8,13 @@ export const UPLOADED_RESUME_DATA_STORAGE_KEY = "uploaded_resume_data";
 
 export interface AuthUser {
   id?: number;
-  provider: "linkedin";
+  provider: "local" | "linkedin";
   name: string;
   email: string;
   picture: string;
   signedInAt: string;
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface LinkedInAuthPayload {
-  profile: AuthUser;
-  resumeData: ResumeData;
-  resumeId?: number;
 }
 
 const isBrowser = () => typeof window !== "undefined";
@@ -35,44 +29,11 @@ const safeParse = <T>(value: string | null): T | null => {
   }
 };
 
-const decodeBase64UrlJson = <T>(encoded: string): T | null => {
-  try {
-    const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
-    return JSON.parse(atob(padded)) as T;
-  } catch {
-    return null;
-  }
-};
-
-export const decodeLinkedInAuthPayload = (encoded: string): LinkedInAuthPayload | null => {
-  const payload = decodeBase64UrlJson<LinkedInAuthPayload>(encoded);
-  if (!payload?.profile || !payload.resumeData) return null;
-
-  return {
-    profile: {
-      provider: "linkedin",
-      id: payload.profile.id,
-      name: payload.profile.name || "",
-      email: payload.profile.email || "",
-      picture: payload.profile.picture || "",
-      signedInAt: payload.profile.signedInAt || new Date().toISOString(),
-      createdAt: payload.profile.createdAt,
-      updatedAt: payload.profile.updatedAt,
-    },
-    resumeData: payload.resumeData,
-    resumeId: payload.resumeId,
-  };
-};
-
-export const decodeLegacyLinkedInResumeData = (encoded: string): ResumeData | null => {
-  return decodeBase64UrlJson<ResumeData>(encoded);
-};
-
 export const getStoredAuthUser = (): AuthUser | null => {
   if (!isBrowser()) return null;
   const user = safeParse<AuthUser>(window.localStorage.getItem(AUTH_USER_STORAGE_KEY));
-  return user?.provider === "linkedin" ? user : null;
+  if (!user?.email && !user?.name) return null;
+  return user;
 };
 
 export const setStoredAuthUser = (user: AuthUser) => {
@@ -121,7 +82,7 @@ export const consumeUploadedResumeData = (): Partial<ResumeData> | null => {
 
 export const getInitials = (name: string, email: string) => {
   const source = name.trim() || email.trim();
-  if (!source) return "LI";
+  if (!source) return "IN";
 
   const parts = source.split(/\s+/).filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();

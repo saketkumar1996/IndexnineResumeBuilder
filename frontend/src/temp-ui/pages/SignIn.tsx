@@ -1,127 +1,92 @@
-import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Linkedin } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/temp-ui/components/ui/button";
+import { Input } from "@/temp-ui/components/ui/input";
+import { Label } from "@/temp-ui/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/temp-ui/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "@/Black Logo.svg";
-import { apiUrl, authApi } from "@/utils/api";
-import {
-  decodeLegacyLinkedInResumeData,
-  decodeLinkedInAuthPayload,
-  getStoredAuthUser,
-  setLinkedInResumeData,
-  setStoredAuthUser,
-} from "@/utils/auth";
+import { ApiError, authApi } from "@/utils/api";
+import { setStoredAuthUser } from "@/utils/auth";
+
+type AuthMode = "signin" | "register";
 
 export const SignIn = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const [mode, setMode] = useState<AuthMode>("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  // Handle LinkedIn OAuth redirects before applying the signed-in redirect.
   useEffect(() => {
-    const error = searchParams.get("linkedin_error");
-    if (error) {
-      toast({
-        title: "LinkedIn sign-in failed",
-        description: searchParams.get("linkedin_error_description") || error,
-        variant: "destructive",
+    let cancelled = false;
+
+    authApi.me()
+      .then((user) => {
+        if (cancelled) return;
+        setStoredAuthUser({
+          ...user,
+          signedInAt: user.signedInAt || new Date().toISOString(),
+        });
+        navigate("/builder", { replace: true });
+      })
+      .catch(() => {
+        // Stay on sign-in until the user authenticates.
       });
-      navigate("/signin", { replace: true });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+
+    if (mode === "register" && password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
-    const authPayload = searchParams.get("linkedin_auth");
-    if (authPayload) {
-      const decoded = decodeLinkedInAuthPayload(authPayload);
-      if (!decoded) {
-        toast({
-          title: "Sign-in failed",
-          description: "Failed to process LinkedIn sign-in data. Please try again.",
-          variant: "destructive",
-        });
-        navigate("/signin", { replace: true });
-        return;
-      }
+    setSubmitting(true);
+    try {
+      const user = mode === "register"
+        ? await authApi.register({ name, email, password })
+        : await authApi.login({ email, password });
 
-      setStoredAuthUser(decoded.profile);
-      setLinkedInResumeData(decoded.resumeData);
-
-      toast({
-        title: "Signed in with LinkedIn",
-        description: "Your LinkedIn profile is connected.",
-      });
-
-      navigate("/builder", { replace: true });
-      return;
-    }
-
-    const legacyData = searchParams.get("linkedin_data");
-    if (legacyData) {
-      const decoded = decodeLegacyLinkedInResumeData(legacyData);
-      if (!decoded) {
-        toast({
-          title: "Import failed",
-          description: "Failed to process LinkedIn data. Please try again.",
-          variant: "destructive",
-        });
-        navigate("/signin", { replace: true });
-        return;
-      }
-
-      setLinkedInResumeData(decoded);
       setStoredAuthUser({
-        provider: "linkedin",
-        name: decoded.header?.fullName || "",
-        email: decoded.header?.email || "",
-        picture: "",
-        signedInAt: new Date().toISOString(),
+        ...user,
+        signedInAt: user.signedInAt || new Date().toISOString(),
       });
       toast({
-        title: "LinkedIn data imported",
-        description: "Redirecting to resume builder...",
+        title: mode === "register" ? "Account created" : "Signed in",
+        description: mode === "register"
+          ? "Welcome. You can start building your resume."
+          : `Signed in as ${user.email}.`,
       });
       navigate("/builder", { replace: true });
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      setError(message);
+    } finally {
+      setSubmitting(false);
     }
-  }, [navigate, searchParams, toast]);
-
-  useEffect(() => {
-    const hasLinkedInRedirect =
-      searchParams.get("linkedin_auth") ||
-      searchParams.get("linkedin_data") ||
-      searchParams.get("linkedin_error");
-
-    if (!hasLinkedInRedirect && getStoredAuthUser()) {
-      navigate("/builder", { replace: true });
-      return;
-    }
-
-    if (!hasLinkedInRedirect) {
-      authApi.me()
-        .then((user) => {
-          setStoredAuthUser({
-            ...user,
-            signedInAt: user.signedInAt || new Date().toISOString(),
-          });
-          navigate("/builder", { replace: true });
-        })
-        .catch(() => {
-          // Not signed in yet.
-        });
-    }
-  }, [navigate, searchParams]);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        {/* Logo and Header */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <img 
-              src={logoImage} 
-              alt="Indexnine Logo" 
+            <img
+              src={logoImage}
+              alt="Indexnine Logo"
               className="h-12"
-              style={{ maxHeight: '48px' }}
+              style={{ maxHeight: "48px" }}
             />
           </div>
           <div>
@@ -132,22 +97,89 @@ export const SignIn = () => {
           </div>
         </div>
 
-        {/* Sign In Options */}
-        <div className="space-y-4">
-          {/* LinkedIn Sign In */}
-          <Button
-            asChild
-            className="w-full h-12 text-base"
-            size="lg"
-          >
-            <a href={apiUrl("/api/linkedin/auth")}>
-              <Linkedin size={20} className="mr-3" />
-              Sign in with LinkedIn
-            </a>
-          </Button>
-        </div>
+        <Tabs value={mode} onValueChange={(value) => { setMode(value as AuthMode); setError(""); }}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Sign in</TabsTrigger>
+            <TabsTrigger value="register">Create account</TabsTrigger>
+          </TabsList>
 
-        {/* Footer */}
+          <TabsContent value={mode} className="mt-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {mode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    autoComplete="name"
+                    placeholder="Ada Lovelace"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={mode === "register" ? "new-password" : "current-password"}
+                  placeholder={mode === "register" ? "At least 8 characters" : "Your password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  minLength={8}
+                  required
+                />
+              </div>
+
+              {mode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm password</Label>
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Repeat your password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    minLength={8}
+                    required
+                  />
+                </div>
+              )}
+
+              {error && (
+                <p className="text-sm text-destructive" role="alert">{error}</p>
+              )}
+
+              <Button type="submit" className="w-full h-12 text-base" size="lg" disabled={submitting}>
+                {submitting
+                  ? "Please wait..."
+                  : mode === "register"
+                    ? "Create account"
+                    : "Sign in"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
+
         <div className="text-center text-xs text-muted-foreground">
           <p>By continuing, you agree to our terms of service</p>
         </div>

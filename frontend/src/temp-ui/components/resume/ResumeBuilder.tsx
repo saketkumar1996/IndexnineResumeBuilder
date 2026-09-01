@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -58,6 +59,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/temp-ui/components/ui/dropdown-menu";
+import { parseExperienceDates } from "@/utils/dates";
 import {
   aiApi,
   authApi,
@@ -219,12 +221,16 @@ const itemArrayFromUpload = <T,>(value: T[] | T | undefined): T[] => {
 
 const normalizeUploadedExperience = (experience: UploadedExperienceData): ResumeData["experiences"][number] => {
   const source = experience as Record<string, unknown>;
+  const { startDate, endDate } = parseExperienceDates(
+    firstTextFromUpload(source, ["startDate", "start_date", "from"]),
+    firstTextFromUpload(source, ["endDate", "end_date", "to"]),
+  );
   return {
     company: firstTextFromUpload(source, ["company", "employer", "organization"]),
     title: firstTextFromUpload(source, ["title", "position", "role", "designation"]),
     location: firstTextFromUpload(source, ["location", "city"]),
-    startDate: firstTextFromUpload(source, ["startDate", "start_date", "from"]),
-    endDate: firstTextFromUpload(source, ["endDate", "end_date", "to"]),
+    startDate,
+    endDate,
     responsibilities: firstListFromUpload(source, ["responsibilities", "responsibility", "bullets", "bulletPoints", "achievements", "highlights", "contributions"])
       .slice(0, PROFESSIONAL_EXPERIENCE_BULLET_LIMIT),
   };
@@ -272,11 +278,6 @@ export const normalizeUploadedResumeData = (extractedData: UploadedResumeData): 
   education: itemArrayFromUpload(extractedData.education),
   awards: itemArrayFromUpload(extractedData.awards),
 });
-
-const navigateToSignIn = () => {
-  window.history.pushState({}, "", "/signin");
-  window.dispatchEvent(new Event("popstate"));
-};
 
 const templateFromResume = (resume: CloudResume): TemplateId => {
   const template = resume.templateId || resume.template_id || "indexnine";
@@ -337,6 +338,7 @@ const buildChecklist = (data: ResumeData) => {
 
 export const ResumeBuilder = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [signedInUser, setSignedInUser] = useState(() => getStoredAuthUser());
   const [isHydrated, setIsHydrated] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -397,11 +399,10 @@ export const ResumeBuilder = () => {
     setActiveResumeId(resume.id);
     setResumeTitle(resume.title || "Untitled Resume");
     setTemplateId(templateFromResume(resume));
-    reset(resume.data || defaultResumeData);
+    reset(resume.data || defaultResumeData, { keepErrors: false });
     setStoredResumeDraft(resume.data || defaultResumeData);
     setTimeout(() => {
       suppressCloudSaveRef.current = false;
-      trigger();
     }, 0);
   };
 
@@ -472,12 +473,12 @@ export const ResumeBuilder = () => {
         clearStoredAuthUser();
         setSignedInUser(null);
         setSaveStatus("Sign in required");
-        navigateToSignIn();
+        navigate("/signin", { replace: true });
       }
     };
 
     void bootstrap();
-  }, [reset, toast, trigger]);
+  }, [navigate, reset, toast]);
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -622,7 +623,7 @@ export const ResumeBuilder = () => {
       title: "Logged out",
       description: "Your current browser draft is still available in this session.",
     });
-    navigateToSignIn();
+    navigate("/signin", { replace: true });
   };
 
   const handleSelectResume = (id: number) => {
@@ -843,17 +844,17 @@ export const ResumeBuilder = () => {
             {signedInUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-10 px-2" aria-label="LinkedIn profile menu">
+                  <Button variant="ghost" size="sm" className="h-10 px-2" aria-label="Account menu">
                     <Avatar className="h-8 w-8">
                       {signedInUser.picture && (
-                        <AvatarImage src={signedInUser.picture} alt={`${signedInUser.name || "LinkedIn"} profile`} />
+                        <AvatarImage src={signedInUser.picture} alt={`${signedInUser.name || signedInUser.email || "Account"} profile`} />
                       )}
                       <AvatarFallback className="text-xs">
                         {getInitials(signedInUser.name, signedInUser.email)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="hidden max-w-32 truncate text-sm font-medium md:inline">
-                      {signedInUser.name || signedInUser.email || "LinkedIn"}
+                      {signedInUser.name || signedInUser.email || "Account"}
                     </span>
                     <ChevronDown size={16} className="hidden md:block" />
                   </Button>
@@ -861,7 +862,7 @@ export const ResumeBuilder = () => {
                 <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>
                     <div className="space-y-1">
-                      <p className="truncate text-sm font-medium">{signedInUser.name || "LinkedIn user"}</p>
+                      <p className="truncate text-sm font-medium">{signedInUser.name || signedInUser.email || "Account"}</p>
                       {signedInUser.email && (
                         <p className="truncate text-xs font-normal text-muted-foreground">{signedInUser.email}</p>
                       )}
@@ -875,9 +876,11 @@ export const ResumeBuilder = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="sm" onClick={navigateToSignIn}>
-                <LogIn size={16} className="mr-2" />
-                Sign in
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/signin">
+                  <LogIn size={16} className="mr-2" />
+                  Sign in
+                </Link>
               </Button>
             )}
 

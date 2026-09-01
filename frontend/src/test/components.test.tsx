@@ -1,11 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ResumeBuilder, normalizeUploadedResumeData } from "../temp-ui/components/resume/ResumeBuilder";
 import { defaultResumeData, sampleResumeData } from "../types/resume";
 
 const signedInUser = {
   id: 1,
-  provider: "linkedin",
+  provider: "local",
   name: "Asha Rao",
   email: "asha@example.com",
   picture: "https://media.example.com/asha.jpg",
@@ -18,6 +19,16 @@ const cloudResume = {
   template_id: "indexnine",
   data: defaultResumeData,
 };
+
+const renderBuilder = () =>
+  render(
+    <MemoryRouter initialEntries={["/builder"]}>
+      <Routes>
+        <Route path="/signin" element={<div>Sign in page</div>} />
+        <Route path="/builder" element={<ResumeBuilder />} />
+      </Routes>
+    </MemoryRouter>,
+  );
 
 describe("ResumeBuilder", () => {
   beforeEach(() => {
@@ -50,9 +61,9 @@ describe("ResumeBuilder", () => {
   });
 
   it("renders the launch workspace controls", async () => {
-    render(<ResumeBuilder />);
+    renderBuilder();
 
-    expect(await screen.findByLabelText(/linkedin profile menu/i)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/account menu/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/resume title/i)).toHaveValue("Launch Resume");
     expect(screen.getByRole("button", { name: /save version/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /versions/i })).toBeInTheDocument();
@@ -60,7 +71,7 @@ describe("ResumeBuilder", () => {
   });
 
   it("renders the completion checklist and AI panel", async () => {
-    render(<ResumeBuilder />);
+    renderBuilder();
 
     expect(await screen.findByText("Completion")).toBeInTheDocument();
     expect(screen.getByText("Job Match And AI Tools")).toBeInTheDocument();
@@ -105,6 +116,22 @@ describe("ResumeBuilder", () => {
 
     expect(uploaded.experiences[0]).toMatchObject(experience[0]);
     expect(uploaded.projects[0]).toMatchObject(project[0]);
+  });
+
+  it("normalizes uploaded experience dates into MMM YYYY", () => {
+    const uploaded = normalizeUploadedResumeData({
+      experiences: [
+        { company: "A", title: "Engineer", location: "Pune", startDate: "April 2024", endDate: "current" },
+        { company: "B", title: "Intern", location: "Pune", startDate: "04/2023", endDate: "2023-12" },
+        { company: "C", title: "Lead", location: "Pune", startDate: "Jan 2021 - Present" },
+        { company: "D", title: "Analyst", location: "Pune", startDate: "2022-08" },
+      ],
+    });
+
+    expect(uploaded.experiences[0]).toMatchObject({ startDate: "Apr 2024", endDate: "Present" });
+    expect(uploaded.experiences[1]).toMatchObject({ startDate: "Apr 2023", endDate: "Dec 2023" });
+    expect(uploaded.experiences[2]).toMatchObject({ startDate: "Jan 2021", endDate: "Present" });
+    expect(uploaded.experiences[3]).toMatchObject({ startDate: "Aug 2022", endDate: "" });
   });
 
   it("promotes the first project bullet to description when the upload has no description", () => {

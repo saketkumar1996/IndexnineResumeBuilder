@@ -16,9 +16,9 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
   const wordCount = summaryValue.split(/\s+/).filter(word => word.length > 0).length;
   
   const getWordCountColor = () => {
-    if (wordCount < 50) return 'text-destructive';
-    if (wordCount > 200) return 'text-destructive';
-    return 'text-green-600';
+    if (wordCount === 0) return "text-muted-foreground";
+    if (wordCount < 50 || wordCount > 200) return "text-destructive";
+    return "text-green-600";
   };
 
   const addBulletPoint = () => {
@@ -49,7 +49,7 @@ export const ExpertiseSection = ({ form }: ExpertiseSectionProps) => {
             Professional Summary *
           </label>
           <span className={`text-sm ${getWordCountColor()}`}>
-            {wordCount}/50-200 words
+            {wordCount === 0 ? "50–200 words" : `${wordCount} / 50–200 words`}
           </span>
         </div>
         <TextAreaInput

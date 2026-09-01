@@ -1,5 +1,6 @@
 from copy import deepcopy
-from typing import Any, Dict, List
+import re
+from typing import Any, Dict, List, Tuple
 
 
 MONTHS = {
@@ -18,21 +19,82 @@ MONTHS = {
 }
 
 
+MONTH_ABBREV = [
+    "", "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+]
+_RANGE_SPLIT = re.compile(r"\s*–\s*|\s*—\s*|\s+-\s+|\s+(?:to|until|thru|through)\s+", re.IGNORECASE)
+
+
+def _four_digit_year(value: str) -> str:
+    if value.isdigit() and len(value) == 4:
+        return value
+    if value.isdigit() and len(value) == 2:
+        year = int(value)
+        return str(1900 + year if year >= 50 else 2000 + year)
+    return ""
+
+
+def _month_from_number(value: str) -> str:
+    if not value.isdigit():
+        return ""
+    month = int(value)
+    if 1 <= month <= 12:
+        return MONTH_ABBREV[month]
+    return ""
+
+
 def _date(value: Any, fallback_month: str = "JAN") -> str:
     raw = str(value or "").strip()
     if not raw:
         return ""
-    if raw.lower() == "present":
+    if raw.lower() in {"present", "current", "now", "ongoing"}:
         return "Present"
+
+    named = re.search(r"\b([A-Za-z]+)\.?,?\s+'?(\d{2}|\d{4})\b", raw)
+    if named:
+        month = MONTHS.get(named.group(1).lower())
+        year = _four_digit_year(named.group(2))
+        if month and year:
+            return f"{month} {year}"
+
+    numeric = re.search(r"\b(\d{1,2})[/\-.](\d{2}|\d{4})\b", raw) or re.search(
+        r"\b(\d{4})[/\-.](\d{1,2})(?:[/\-.]\d{1,2})?\b", raw
+    )
+    if numeric:
+        first, second = numeric.group(1), numeric.group(2)
+        if len(first) == 4:
+            month = _month_from_number(second)
+            if month:
+                return f"{month} {first}"
+        else:
+            month = _month_from_number(first)
+            year = _four_digit_year(second)
+            if month and year:
+                return f"{month} {year}"
+
     parts = raw.replace("/", " ").replace("-", " ").split()
     if len(parts) >= 2:
-        month = MONTHS.get(parts[0].lower(), parts[0].upper()[:3])
-        year = parts[-1]
-        if year.isdigit() and len(year) == 4:
+        month = MONTHS.get(parts[0].lower(), "")
+        year = _four_digit_year(parts[-1])
+        if month and year:
             return f"{month} {year}"
     if raw.isdigit() and len(raw) == 4:
         return f"{fallback_month} {raw}"
     return raw.upper()
+
+
+def parse_experience_dates(start_raw: Any, end_raw: Any) -> Tuple[str, str]:
+    start = str(start_raw or "").strip()
+    end = str(end_raw or "").strip()
+    if start and not end and _RANGE_SPLIT.search(start):
+        parts = [part.strip() for part in _RANGE_SPLIT.split(start) if part.strip()]
+        if len(parts) >= 2:
+            start, end = parts[0], parts[1]
+    start_date = _date(start)
+    if start_date.lower() == "present":
+        start_date = ""
+    return start_date, _date(end)
 
 
 def _non_empty_list(values: Any) -> List[str]:

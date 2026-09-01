@@ -24,12 +24,6 @@ services:
         sync: false
       - key: FRONTEND_REDIRECT_URL
         sync: false
-      - key: LINKEDIN_CLIENT_ID
-        sync: false
-      - key: LINKEDIN_CLIENT_SECRET
-        sync: false
-      - key: LINKEDIN_REDIRECT_URI
-        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: AI_MODEL

@@ -55,7 +55,6 @@ app.include_router(api_router, prefix="/api")
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(resumes_router, prefix="/api/resumes", tags=["resumes"])
 app.include_router(ai_router, prefix="/api/ai", tags=["ai"])
-# LinkedIn OAuth: /api/linkedin/auth and /api/linkedin/callback
 app.include_router(linkedin_router, prefix="/api/linkedin", tags=["linkedin"])
 
 @app.get("/")
@@ -81,14 +80,9 @@ def _get_routes():
 
 @app.get("/api/debug/routes")
 async def debug_routes():
-    """Return registered routes. Use to confirm you're hitting this app and that /api/linkedin/auth exists."""
+    """Return registered routes for debugging."""
     return {"app": "Indexnine Resume Builder API", "routes": _get_routes()}
 
-
-@app.get("/api/linkedin/ok")
-async def linkedin_ok():
-    """Debug: if this returns {"ok": true}, the app is correct and /api/linkedin/auth should work too."""
-    return {"ok": True}
 
 if __name__ == "__main__":
     import uvicorn
