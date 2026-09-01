@@ -3,7 +3,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 from typing import List, Dict, Any, Optional
 from models.resume_models import ResumeModel
-from core.resume_normalizer import normalize_resume_input
+from core.resume_normalizer import normalize_resume_input, parse_experience_dates
 import os
 import json
 import re
@@ -518,12 +518,16 @@ def _normalize_uploaded_project(project: Any) -> Dict[str, Any]:
 
 def _normalize_uploaded_experience(exp: Any) -> Dict[str, Any]:
     source = exp if isinstance(exp, dict) else {}
+    start_date, end_date = parse_experience_dates(
+        _first_text(source, "startDate", "start_date", "from"),
+        _first_text(source, "endDate", "end_date", "to"),
+    )
     return {
         "company": _first_text(source, "company", "employer", "organization"),
         "title": _first_text(source, "title", "position", "role", "designation"),
         "location": _first_text(source, "location", "city"),
-        "startDate": _first_text(source, "startDate", "start_date", "from"),
-        "endDate": _first_text(source, "endDate", "end_date", "to"),
+        "startDate": start_date,
+        "endDate": end_date,
         "responsibilities": _first_text_list(
             source,
             "responsibilities",

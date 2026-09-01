@@ -86,6 +86,16 @@ export const apiFetch = async <T>(path: string, options: RequestInit = {}): Prom
 
 export const authApi = {
   me: () => apiFetch<AuthUser>("/api/auth/me"),
+  login: (payload: { email: string; password: string }) =>
+    apiFetch<AuthUser>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  register: (payload: { name?: string; email: string; password: string }) =>
+    apiFetch<AuthUser>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   logout: () => apiFetch<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
 };
 

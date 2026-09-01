@@ -76,9 +76,11 @@ def clear_session_cookie(response: Response):
 
 
 def serialize_user(user: Dict) -> Dict:
+    linkedin_sub = str(user.get("linkedin_sub") or "")
+    provider = "local" if linkedin_sub.startswith("local:") or user.get("password_hash") else "linkedin"
     return {
         "id": user["id"],
-        "provider": "linkedin",
+        "provider": provider,
         "name": user.get("name") or "",
         "email": user.get("email") or "",
         "picture": user.get("picture") or "",

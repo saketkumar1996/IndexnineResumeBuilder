@@ -51,3 +51,23 @@ def test_experience_responsibilities_are_limited_to_three():
     })
 
     assert normalized["experiences"][0]["responsibilities"] == ["One", "Two", "Three"]
+
+
+def test_experience_dates_are_normalized_to_month_year():
+    normalized = _normalize_uploaded_resume_data({
+        "experiences": [
+            {"company": "A", "startDate": "April 2024", "endDate": "current"},
+            {"company": "B", "startDate": "04/2023", "endDate": "2023-12"},
+            {"company": "C", "startDate": "Jan 2021 - Present"},
+            {"company": "D", "startDate": "2022-08", "endDate": ""},
+        ]
+    })
+
+    assert normalized["experiences"][0]["startDate"] == "APR 2024"
+    assert normalized["experiences"][0]["endDate"] == "Present"
+    assert normalized["experiences"][1]["startDate"] == "APR 2023"
+    assert normalized["experiences"][1]["endDate"] == "DEC 2023"
+    assert normalized["experiences"][2]["startDate"] == "JAN 2021"
+    assert normalized["experiences"][2]["endDate"] == "Present"
+    assert normalized["experiences"][3]["startDate"] == "AUG 2022"
+    assert normalized["experiences"][3]["endDate"] == ""

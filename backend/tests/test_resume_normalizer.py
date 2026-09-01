@@ -49,3 +49,17 @@ def test_normalize_resume_input_accepts_frontend_shape():
     assert normalized["experience"][0]["start_date"] == "APR 2024"
     assert normalized["projects"][0]["start_date"] == "JAN 2024"
     assert normalized["education"][0]["graduation_date"] == "MAY 2020"
+
+
+def test_date_normalizes_numeric_and_full_month_formats():
+    normalized = normalize_resume_input({
+        "experiences": [
+            {"startDate": "April 2024", "endDate": "current"},
+            {"startDate": "04/2023", "endDate": "2023-12"},
+        ]
+    })
+
+    assert normalized["experience"][0]["start_date"] == "APR 2024"
+    assert normalized["experience"][0]["end_date"] == "Present"
+    assert normalized["experience"][1]["start_date"] == "APR 2023"
+    assert normalized["experience"][1]["end_date"] == "DEC 2023"

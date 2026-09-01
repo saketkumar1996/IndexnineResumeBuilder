@@ -7,14 +7,18 @@ import { ResumeBuilder } from "../temp-ui/components/resume/ResumeBuilder";
 import { defaultResumeData } from "../types/resume";
 import {
   AUTH_USER_STORAGE_KEY,
-  LINKEDIN_RESUME_DATA_STORAGE_KEY,
   RESUME_DRAFT_STORAGE_KEY,
   type AuthUser,
-  type LinkedInAuthPayload,
 } from "../utils/auth";
 
-const encodeBase64Url = (value: unknown) =>
-  btoa(JSON.stringify(value)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const signedInUser: AuthUser = {
+  id: 1,
+  provider: "local",
+  name: "Asha Rao",
+  email: "asha@example.com",
+  picture: "",
+  signedInAt: "2026-05-29T05:00:00+00:00",
+};
 
 const renderSignInAt = (path: string) =>
   render(
@@ -27,93 +31,82 @@ const renderSignInAt = (path: string) =>
     </MemoryRouter>,
   );
 
-describe("LinkedIn auth flow", () => {
+const renderAppAt = (path: string) =>
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/builder" element={<ResumeBuilder />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+describe("Custom auth flow", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     window.localStorage.clear();
     window.sessionStorage.clear();
     window.history.pushState({}, "", "/builder");
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
   });
 
-  it("renders only LinkedIn login on the sign-in screen", () => {
+  it("renders email and password sign-in instead of LinkedIn", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 401 }));
 
     renderSignInAt("/signin");
 
-    expect(screen.getByRole("link", { name: /sign in with linkedin/i })).toHaveAttribute(
-      "href",
-      "/api/linkedin/auth",
-    );
-    expect(screen.queryByRole("button", { name: /continue without signing in/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/upload resume/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /create account/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /sign in with linkedin/i })).not.toBeInTheDocument();
   });
 
-  it("stores LinkedIn auth payload and redirects to the builder", async () => {
-    const payload: LinkedInAuthPayload = {
-      profile: {
-        provider: "linkedin",
-        name: "Asha Rao",
-        email: "asha@example.com",
-        picture: "https://media.example.com/asha.jpg",
-        signedInAt: "2026-05-29T05:00:00+00:00",
-      },
-      resumeData: {
-        ...defaultResumeData,
-        header: {
-          ...defaultResumeData.header,
-          fullName: "Asha Rao",
-          email: "asha@example.com",
-        },
-      },
-    };
-
-    renderSignInAt(`/signin?linkedin_auth=${encodeBase64Url(payload)}`);
-
-    await screen.findByText("Builder Route");
-    expect(JSON.parse(window.localStorage.getItem(AUTH_USER_STORAGE_KEY) || "{}")).toMatchObject(payload.profile);
-    expect(JSON.parse(window.sessionStorage.getItem(LINKEDIN_RESUME_DATA_STORAGE_KEY) || "{}")).toMatchObject({
-      header: { fullName: "Asha Rao", email: "asha@example.com" },
+  it("signs in with email and password and redirects to the builder", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/api/auth/login") && init?.method === "POST") {
+        return new Response(JSON.stringify(signedInUser), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response("{}", { status: 401 });
     });
-  });
 
-  it("stores a LinkedIn app session for legacy linkedin_data redirects", async () => {
-    const resumeData = {
-      ...defaultResumeData,
-      header: {
-        ...defaultResumeData.header,
-        fullName: "Saket Kumar Jha",
-        email: "saket@example.com",
-      },
-    };
-
-    renderSignInAt(`/signin?linkedin_data=${encodeBase64Url(resumeData)}`);
+    renderSignInAt("/signin");
+    await user.type(screen.getByLabelText(/^email$/i), "asha@example.com");
+    await user.type(screen.getByLabelText(/^password$/i), "secretpass");
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await screen.findByText("Builder Route");
     expect(JSON.parse(window.localStorage.getItem(AUTH_USER_STORAGE_KEY) || "{}")).toMatchObject({
-      provider: "linkedin",
-      name: "Saket Kumar Jha",
-      email: "saket@example.com",
-      picture: "",
-    });
-    expect(JSON.parse(window.sessionStorage.getItem(LINKEDIN_RESUME_DATA_STORAGE_KEY) || "{}")).toMatchObject({
-      header: { fullName: "Saket Kumar Jha", email: "saket@example.com" },
+      provider: "local",
+      email: "asha@example.com",
+      name: "Asha Rao",
     });
   });
 
-  it("shows LinkedIn profile controls when signed in", () => {
-    const user: AuthUser = {
-      id: 1,
-      provider: "linkedin",
-      name: "Asha Rao",
-      email: "asha@example.com",
-      picture: "https://media.example.com/asha.jpg",
-      signedInAt: "2026-05-29T05:00:00+00:00",
-    };
-    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user));
+  it("shows account controls when signed in", () => {
+    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(signedInUser));
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/auth/me")) {
-        return new Response(JSON.stringify(user), { status: 200, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify(signedInUser), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/api/resumes")) {
         return new Response(JSON.stringify([
@@ -123,40 +116,27 @@ describe("LinkedIn auth flow", () => {
       return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
     });
 
-    render(<ResumeBuilder />);
+    renderAppAt("/builder");
 
-    expect(screen.getByLabelText(/linkedin profile menu/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/account menu/i)).toBeInTheDocument();
     expect(screen.getByText("Asha Rao")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^sign in$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^sign in$/i })).not.toBeInTheDocument();
   });
 
   it("logs out without clearing the session resume draft", async () => {
     const user = userEvent.setup();
-    window.localStorage.setItem(
-      AUTH_USER_STORAGE_KEY,
-      JSON.stringify({
-        id: 1,
-        provider: "linkedin",
-        name: "Asha Rao",
-        email: "asha@example.com",
-        picture: "",
-        signedInAt: "2026-05-29T05:00:00+00:00",
-      }),
-    );
+    window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(signedInUser));
     window.sessionStorage.setItem(RESUME_DRAFT_STORAGE_KEY, JSON.stringify(defaultResumeData));
+    let sessionActive = true;
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes("/api/auth/logout") && init?.method === "POST") {
+        sessionActive = false;
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/api/auth/me")) {
-        return new Response(JSON.stringify({
-          id: 1,
-          provider: "linkedin",
-          name: "Asha Rao",
-          email: "asha@example.com",
-          picture: "",
-        }), { status: 200, headers: { "Content-Type": "application/json" } });
+        if (!sessionActive) return new Response("{}", { status: 401 });
+        return new Response(JSON.stringify(signedInUser), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       if (url.includes("/api/resumes")) {
         return new Response(JSON.stringify([
@@ -166,21 +146,41 @@ describe("LinkedIn auth flow", () => {
       return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
     });
 
-    render(<ResumeBuilder />);
-    await user.click(screen.getByLabelText(/linkedin profile menu/i));
+    renderAppAt("/builder");
+    await user.click(screen.getByLabelText(/account menu/i));
     await user.click(await screen.findByText("Logout"));
 
     await waitFor(() => {
       expect(window.localStorage.getItem(AUTH_USER_STORAGE_KEY)).toBeNull();
-      expect(window.location.pathname).toBe("/signin");
     });
+    expect(await screen.findByLabelText(/^email$/i)).toBeInTheDocument();
     expect(window.sessionStorage.getItem(RESUME_DRAFT_STORAGE_KEY)).not.toBeNull();
   });
 
   it("redirects guests to sign in for the SaaS workspace", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 401 }));
-    render(<ResumeBuilder />);
+    renderAppAt("/builder");
 
-    await waitFor(() => expect(window.location.pathname).toBe("/signin"));
+    expect(await screen.findByLabelText(/^email$/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/resume title/i)).not.toBeInTheDocument();
+  });
+
+  it("opens the sign-in page from the builder without bouncing back", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      if (String(input).includes("/api/auth/me")) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      return new Response("{}", { status: 401 });
+    });
+
+    renderAppAt("/builder");
+    await user.click(screen.getByRole("link", { name: /^sign in$/i }));
+
+    expect(await screen.findByLabelText(/^email$/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
+      expect(screen.queryByLabelText(/resume title/i)).not.toBeInTheDocument();
+    });
   });
 });

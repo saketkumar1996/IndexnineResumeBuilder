@@ -183,6 +183,35 @@ def init_db():
                     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
             """)
+        _ensure_local_auth_schema(conn)
+
+
+def _table_columns(conn, table: str) -> set:
+    if _is_postgres():
+        rows = _fetchall(
+            conn,
+            "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
+            [table],
+        )
+        return {str(row["column_name"]) for row in rows}
+    rows = _fetchall(conn, f"PRAGMA table_info({table})")
+    return {str(row["name"]) for row in rows}
+
+
+def _ensure_local_auth_schema(conn):
+    columns = _table_columns(conn, "users")
+    if "password_hash" not in columns:
+        _execute(conn, "ALTER TABLE users ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''")
+    if _is_postgres():
+        _execute(
+            conn,
+            "CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (LOWER(email)) WHERE email <> ''",
+        )
+    else:
+        _execute(
+            conn,
+            "CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email) WHERE email != ''",
+        )
 
 
 def upsert_linkedin_user(profile: Dict[str, Any]) -> Dict[str, Any]:
@@ -223,6 +252,41 @@ def get_user_by_id(user_id: int, conn=None) -> Optional[Dict[str, Any]]:
         return _fetchone(conn, f"SELECT * FROM users WHERE id = {p}", [user_id])
     with get_db() as db:
         return _fetchone(db, f"SELECT * FROM users WHERE id = {p}", [user_id])
+
+
+def get_user_by_email(email: str, conn=None) -> Optional[Dict[str, Any]]:
+    p = _placeholder()
+    sql = f"SELECT * FROM users WHERE LOWER(email) = LOWER({p})"
+    params = [email]
+    if conn is not None:
+        return _fetchone(conn, sql, params)
+    with get_db() as db:
+        return _fetchone(db, sql, params)
+
+
+def create_local_user(name: str, email: str, password_hash: str) -> Dict[str, Any]:
+    email = email.strip().lower()
+    name = (name or "").strip() or email.split("@")[0]
+    p = _placeholder()
+    with get_db() as conn:
+        if get_user_by_email(email, conn=conn):
+            raise ValueError("An account with this email already exists.")
+        try:
+            cur = _execute(
+                conn,
+                f"INSERT INTO users (linkedin_sub, name, email, picture, password_hash) VALUES ({p}, {p}, {p}, {p}, {p})",
+                [f"local:{email}", name, email, "", password_hash],
+            )
+        except Exception as exc:
+            message = str(exc).lower()
+            if "unique" in message or "duplicate" in message:
+                raise ValueError("An account with this email already exists.") from exc
+            raise
+        user_id = getattr(cur, "lastrowid", None)
+        if _is_postgres():
+            row = _fetchone(conn, "SELECT currval(pg_get_serial_sequence('users','id')) AS id")
+            user_id = row["id"]
+        return get_user_by_id(int(user_id), conn=conn)
 
 
 def list_resumes(user_id: int) -> List[Dict[str, Any]]:
