@@ -14,7 +14,7 @@ const signedInUser = {
 };
 
 const cloudResume = {
-  id: 10,
+  id: "6636f0a1c2d3e4f5a6b7c8da",
   title: "Launch Resume",
   template_id: "indexnine",
   data: defaultResumeData,

@@ -2,7 +2,7 @@ import type { ResumeData } from "@/types/resume";
 import type { AuthUser } from "@/utils/auth";
 
 export interface CloudResume {
-  id: number;
+  id: string;
   title: string;
   template_id?: string;
   templateId?: string;
@@ -12,8 +12,8 @@ export interface CloudResume {
 }
 
 export interface ResumeVersion {
-  id: number;
-  resume_id: number;
+  id: string;
+  resume_id: string;
   version_number: number;
   label: string;
   data: ResumeData;
@@ -106,22 +106,22 @@ export const resumesApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  update: (id: number, payload: Partial<{ title: string; templateId: string; data: ResumeData }>) =>
+  update: (id: string, payload: Partial<{ title: string; templateId: string; data: ResumeData }>) =>
     apiFetch<CloudResume>(`/api/resumes/${id}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
-  delete: (id: number) =>
+  delete: (id: string) =>
     apiFetch<{ ok: boolean }>(`/api/resumes/${id}`, {
       method: "DELETE",
     }),
-  saveVersion: (id: number, label?: string) =>
+  saveVersion: (id: string, label?: string) =>
     apiFetch<ResumeVersion>(`/api/resumes/${id}/versions`, {
       method: "POST",
       body: JSON.stringify({ label }),
     }),
-  versions: (id: number) => apiFetch<ResumeVersion[]>(`/api/resumes/${id}/versions`),
-  restoreVersion: (id: number, versionId: number) =>
+  versions: (id: string) => apiFetch<ResumeVersion[]>(`/api/resumes/${id}/versions`),
+  restoreVersion: (id: string, versionId: string) =>
     apiFetch<CloudResume>(`/api/resumes/${id}/versions/${versionId}/restore`, {
       method: "POST",
     }),
@@ -138,7 +138,7 @@ export const aiApi = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  coverLetter: (payload: { resumeId?: number; resumeData: ResumeData; jobDescription: string }) =>
+  coverLetter: (payload: { resumeId?: string; resumeData: ResumeData; jobDescription: string }) =>
     apiFetch<{ content: string; saved: boolean }>("/api/ai/cover-letter", {
       method: "POST",
       body: JSON.stringify(payload),

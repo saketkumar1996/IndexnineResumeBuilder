@@ -1,13 +1,13 @@
 /**
- * Zod validation schemas matching backend Pydantic models
- * Updated to match temp-ui component expectations
+ * Zod validation schemas. These are the only place resume content rules are
+ * enforced; the API validates request shape, auth and ownership but not content.
  * Requirements: 1.5, 5.5, 10.1, 10.2, 10.3
  */
 
 import { z } from 'zod';
 import { PROFESSIONAL_EXPERIENCE_BULLET_LIMIT, PROJECT_EXPERIENCE_BULLET_LIMIT } from '@/types/resume';
 
-// Emoji validation regex (matches backend pattern)
+// Emoji validation regex
 const EMOJI_PATTERN = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2702}-\u{27B0}\u{24C2}-\u{1F251}]/u;
 
 // Custom validation functions

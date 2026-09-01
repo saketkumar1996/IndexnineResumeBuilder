@@ -1,12 +1,22 @@
 # Environment setup
 
-Accounts use email and password. Session cookies are signed with `SESSION_SECRET`.
+Accounts use email and password. Session cookies carry a JWT signed with
+`SESSION_SECRET`.
+
+## Prerequisites
+
+- Node.js 20 or newer
+- A MongoDB instance. Any of these works:
+  - Local install, then `mongod --dbpath <path>`
+  - Docker: `docker run -d -p 27017:27017 --name indexnine-mongo mongo:7`
+  - A free [MongoDB Atlas](https://www.mongodb.com/atlas) cluster
 
 ## Quick start
 
 1. **Copy the example env file**
 
    From the repo root:
+
    ```bash
    cp backend/.env.example backend/.env
    ```
@@ -18,7 +28,9 @@ Accounts use email and password. Session cookies are signed with `SESSION_SECRET
 
 2. **Edit `backend/.env`**
 
-   For local development the example values are enough. Set a unique `SESSION_SECRET` if you want, and add `OPENAI_API_KEY` if you use AI extract.
+   Set `MONGODB_URI` to your instance. The example value points at a local
+   `mongod`. Set a unique `SESSION_SECRET` if you want, and add `OPENAI_API_KEY`
+   if you use AI extract or the AI tools.
 
 3. **Run backend and frontend**
 
@@ -26,9 +38,9 @@ Accounts use email and password. Session cookies are signed with `SESSION_SECRET
 
    ```bash
    cd backend
-   pip install -r requirements.txt
-   python main.py
-   # or: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   npm install
+   npm run dev
+   # or: npm run build && npm start
    ```
 
    Frontend:
@@ -43,28 +55,30 @@ Accounts use email and password. Session cookies are signed with `SESSION_SECRET
 
    Open the app, choose **Create account**, enter name, email, and a password of at least 8 characters, then sign in.
 
-5. **Use "Paste & extract with AI" (optional)**
+5. **Use resume import and AI tools (optional)**
 
    - Add `OPENAI_API_KEY` to `backend/.env` (from [OpenAI API keys](https://platform.openai.com/api-keys)).
    - Restart the backend.
-   - Paste LinkedIn (or similar) profile text into the extract flow to fill experience, education, skills, and summary.
+   - Upload a PDF or DOCX resume to fill experience, education, skills, and summary, or use job match, bullet rewriting, and cover letters.
 
 ## Variables reference
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `MONGODB_URI` | Yes | MongoDB connection string (local or Atlas SRV URI) |
+| `PORT` | No | API port (default: `8000`) |
 | `SESSION_SECRET` | Yes in production | Long random secret used to sign session cookies |
 | `FRONTEND_REDIRECT_URL` | No | Frontend origin, also added to CORS (default: `http://localhost:3000`) |
-| `OPENAI_API_KEY` | No* | OpenAI API key for "Paste & extract with AI". If missing, that feature returns 503. |
+| `OPENAI_API_KEY` | No* | OpenAI-compatible API key. If missing, AI features return 503. |
 
-\*Required only for AI profile extract.
+\*Required only for resume import and the AI tools.
 
 ## Production setup
 
 Render backend:
 
 ```env
-DATABASE_URL=<Render Postgres internal/external URL>
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/indexnine_resume_builder
 SESSION_SECRET=<long random value>
 SESSION_SECURE=true
 SESSION_SAMESITE=none
@@ -82,29 +96,45 @@ VITE_API_BASE_URL=https://<your-render-api>.onrender.com
 
 Additional production variables:
 
-- `DATABASE_URL`: Render Postgres connection string. Local dev falls back to SQLite if omitted.
-- `SESSION_SECRET`: long random secret used to sign app session cookies.
+- `MONGODB_URI`: MongoDB Atlas connection string. Allow the Render egress IPs (or
+  `0.0.0.0/0` on the free tier) in the Atlas network access list.
+- `SESSION_SECRET`: long random secret used to sign app session cookies. The API
+  refuses to start if this is still the example default while `SESSION_SECURE=true`
+  or a remote `MONGODB_URI` is configured.
 - `SESSION_SECURE=true`: required for HTTPS cookies in production.
 - `SESSION_SAMESITE=none`: required when Vercel and Render are on different domains.
 - `CORS_ORIGINS`: comma-separated allowed frontend origins, including the Vercel URL.
-- `OPENAI_API_BASE`: optional OpenAI-compatible base URL.
-- `AI_MODEL`: optional model override for SaaS AI endpoints.
+- `SESSION_COOKIE_NAME`: optional cookie name override (default `indexnine_session`).
+- `SESSION_MAX_AGE_SECONDS`: optional session lifetime (default 14 days).
+- `OPENAI_API_BASE`: optional OpenAI-compatible base URL (default OpenRouter).
+- `AI_MODEL`: optional model override for the AI endpoints.
 
 ## File locations
 
-- **Backend env file**: `backend/.env`  
-  The backend loads it via `python-dotenv` when `main.py` starts.  
+- **Backend env file**: `backend/.env`
+  The backend loads it via `dotenv` when the server starts. A `.env` in the repo
+  root is loaded first and takes precedence.
   Never commit `backend/.env`; it is ignored by `.gitignore`.
-- **Example file**: `backend/.env.example`  
+- **Example file**: `backend/.env.example`
   Safe to commit; copy to `backend/.env` and fill in real values.
 
 ## Troubleshooting
 
-- **"Invalid email or password"**  
+- **"MONGODB_URI is not set"**
+  Copy `backend/.env.example` to `backend/.env` and set a connection string.
+
+- **Server exits with a MongoDB timeout**
+  The database is unreachable. Check that `mongod` is running, or that your Atlas
+  IP access list includes your address.
+
+- **"Invalid email or password."**
   The email is unknown or the password does not match. Create an account first from the **Create account** tab.
 
-- **"An account with this email already exists"**  
+- **"An account with this email already exists."**
   Sign in with that email instead of registering again.
 
-- **"AI parse is not configured" or 503 on Paste & extract with AI**  
+- **"AI is not configured" or 503 on AI features**
   Add `OPENAI_API_KEY` to `backend/.env` and restart the backend.
+
+- **Session refuses to start in production**
+  `SESSION_SECRET` is still `dev-indexnine-change-me`. Set a long random value.

@@ -12,7 +12,7 @@ import {
 } from "../utils/auth";
 
 const signedInUser: AuthUser = {
-  id: 1,
+  id: "6636f0a1c2d3e4f5a6b7c8d9",
   provider: "local",
   name: "Asha Rao",
   email: "asha@example.com",
@@ -110,7 +110,7 @@ describe("Custom auth flow", () => {
       }
       if (url.includes("/api/resumes")) {
         return new Response(JSON.stringify([
-          { id: 10, title: "Launch Resume", template_id: "indexnine", data: defaultResumeData },
+          { id: "6636f0a1c2d3e4f5a6b7c8da", title: "Launch Resume", template_id: "indexnine", data: defaultResumeData },
         ]), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
@@ -140,7 +140,7 @@ describe("Custom auth flow", () => {
       }
       if (url.includes("/api/resumes")) {
         return new Response(JSON.stringify([
-          { id: 10, title: "Launch Resume", template_id: "indexnine", data: defaultResumeData },
+          { id: "6636f0a1c2d3e4f5a6b7c8da", title: "Launch Resume", template_id: "indexnine", data: defaultResumeData },
         ]), { status: 200, headers: { "Content-Type": "application/json" } });
       }
       return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
@@ -155,6 +155,50 @@ describe("Custom auth flow", () => {
     });
     expect(await screen.findByLabelText(/^email$/i)).toBeInTheDocument();
     expect(window.sessionStorage.getItem(RESUME_DRAFT_STORAGE_KEY)).not.toBeNull();
+  });
+
+  it("does not carry the previous account's resume draft into a new registration", async () => {
+    const user = userEvent.setup();
+    const previousDraft = {
+      ...defaultResumeData,
+      header: { ...defaultResumeData.header, fullName: "Asha Rao", email: "asha@example.com" },
+    };
+    window.sessionStorage.setItem(
+      RESUME_DRAFT_STORAGE_KEY,
+      JSON.stringify({ userId: signedInUser.id, data: previousDraft }),
+    );
+
+    const newUser: AuthUser = {
+      id: "6636f0a1c2d3e4f5a6b7c8e0",
+      provider: "local",
+      name: "New Person",
+      email: "new@example.com",
+      picture: "",
+      signedInAt: "2026-09-01T12:00:00.000Z",
+    };
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/api/auth/register") && init?.method === "POST") {
+        return new Response(JSON.stringify(newUser), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response("{}", { status: 401 });
+    });
+
+    renderSignInAt("/signin");
+    await user.click(screen.getByRole("tab", { name: /create account/i }));
+    await user.type(screen.getByLabelText(/full name/i), "New Person");
+    await user.type(screen.getByLabelText(/^email$/i), "new@example.com");
+    await user.type(screen.getByLabelText(/^password$/i), "secretpass");
+    await user.type(screen.getByLabelText(/confirm password/i), "secretpass");
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    await screen.findByText("Builder Route");
+    expect(window.sessionStorage.getItem(RESUME_DRAFT_STORAGE_KEY)).toBeNull();
+    expect(JSON.parse(window.localStorage.getItem(AUTH_USER_STORAGE_KEY) || "{}")).toMatchObject({
+      email: "new@example.com",
+      name: "New Person",
+    });
   });
 
   it("redirects guests to sign in for the SaaS workspace", async () => {

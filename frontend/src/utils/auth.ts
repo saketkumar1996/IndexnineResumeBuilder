@@ -7,7 +7,7 @@ export const LEGACY_LINKEDIN_DATA_STORAGE_KEY = "linkedin_data";
 export const UPLOADED_RESUME_DATA_STORAGE_KEY = "uploaded_resume_data";
 
 export interface AuthUser {
-  id?: number;
+  id?: string;
   provider: "local" | "linkedin";
   name: string;
   email: string;
@@ -46,14 +46,46 @@ export const clearStoredAuthUser = () => {
   window.localStorage.removeItem(AUTH_USER_STORAGE_KEY);
 };
 
-export const getStoredResumeDraft = (): ResumeData | null => {
-  if (!isBrowser()) return null;
-  return safeParse<ResumeData>(window.sessionStorage.getItem(RESUME_DRAFT_STORAGE_KEY));
+interface StoredResumeDraft {
+  userId: string;
+  data: ResumeData;
+}
+
+const isResumeData = (value: unknown): value is ResumeData =>
+  typeof value === "object" && value !== null && "header" in value;
+
+/**
+ * Session drafts are tagged with the user they belong to so a new account in the
+ * same browser tab cannot inherit the previous person's resume, including email.
+ */
+export const getStoredResumeDraft = (userId?: string | null): ResumeData | null => {
+  if (!isBrowser() || !userId) return null;
+  const stored = safeParse<StoredResumeDraft | ResumeData>(window.sessionStorage.getItem(RESUME_DRAFT_STORAGE_KEY));
+  if (!stored) return null;
+  if ("userId" in stored && stored.userId && isResumeData(stored.data)) {
+    return stored.userId === userId ? stored.data : null;
+  }
+  return null;
 };
 
-export const setStoredResumeDraft = (data: ResumeData) => {
+export const setStoredResumeDraft = (data: ResumeData, userId?: string | null) => {
+  if (!isBrowser() || !userId) return;
+  const payload: StoredResumeDraft = { userId, data };
+  window.sessionStorage.setItem(RESUME_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+};
+
+export const clearStoredResumeDraft = () => {
   if (!isBrowser()) return;
-  window.sessionStorage.setItem(RESUME_DRAFT_STORAGE_KEY, JSON.stringify(data));
+  window.sessionStorage.removeItem(RESUME_DRAFT_STORAGE_KEY);
+};
+
+/** Drops in-tab resume leftovers that would otherwise leak across accounts. */
+export const clearTransientResumeData = () => {
+  if (!isBrowser()) return;
+  window.sessionStorage.removeItem(RESUME_DRAFT_STORAGE_KEY);
+  window.sessionStorage.removeItem(LINKEDIN_RESUME_DATA_STORAGE_KEY);
+  window.sessionStorage.removeItem(LEGACY_LINKEDIN_DATA_STORAGE_KEY);
+  window.sessionStorage.removeItem(UPLOADED_RESUME_DATA_STORAGE_KEY);
 };
 
 export const setLinkedInResumeData = (data: ResumeData) => {
