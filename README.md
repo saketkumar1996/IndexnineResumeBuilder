@@ -36,7 +36,7 @@ environment variables are needed locally.
 ## Production (Vercel)
 
 Frontend and API ship as one Vercel project. The SPA is `frontend/dist`; Express
-is the serverless function in `api/[[...path]].ts`. Same-origin `/api` calls mean
+is the serverless function in `api/[...path].ts`. Same-origin `/api` calls mean
 you do **not** set `VITE_API_BASE_URL`.
 
 Set these on the Vercel project (Production + Preview):
