@@ -1,6 +1,6 @@
 /**
  * Frontend validation tests using Vitest and fast-check
- * Tests Zod schema validation matching backend Pydantic models
+ * Tests the Zod schemas that enforce the resume content rules
  */
 
 import { describe, it, expect } from 'vitest';

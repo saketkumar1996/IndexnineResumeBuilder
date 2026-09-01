@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/temp-ui/components/u
 import { useToast } from "@/hooks/use-toast";
 import logoImage from "@/Black Logo.svg";
 import { ApiError, authApi } from "@/utils/api";
-import { setStoredAuthUser } from "@/utils/auth";
+import { clearTransientResumeData, setStoredAuthUser } from "@/utils/auth";
 
 type AuthMode = "signin" | "register";
 
@@ -57,6 +57,10 @@ export const SignIn = () => {
       const user = mode === "register"
         ? await authApi.register({ name, email, password })
         : await authApi.login({ email, password });
+
+      if (mode === "register") {
+        clearTransientResumeData();
+      }
 
       setStoredAuthUser({
         ...user,

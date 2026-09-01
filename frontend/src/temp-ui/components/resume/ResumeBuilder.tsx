@@ -355,7 +355,7 @@ export const ResumeBuilder = () => {
   const [previewScale, setPreviewScale] = useState(0.6);
   const [isUploading, setIsUploading] = useState(false);
   const [cloudResumes, setCloudResumes] = useState<CloudResume[]>([]);
-  const [activeResumeId, setActiveResumeId] = useState<number | null>(null);
+  const [activeResumeId, setActiveResumeId] = useState<string | null>(null);
   const [resumeTitle, setResumeTitle] = useState("Untitled Resume");
   const [templateId, setTemplateId] = useState<TemplateId>("indexnine");
   const [saveStatus, setSaveStatus] = useState("Loading workspace...");
@@ -394,13 +394,13 @@ export const ResumeBuilder = () => {
   const handleZoomOut = () => setPreviewScale(prev => Math.max(prev - 0.1, 0.3));
   const toggleSection = (section: string) => setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
 
-  const applyResume = (resume: CloudResume) => {
+  const applyResume = (resume: CloudResume, userId?: string | null) => {
     suppressCloudSaveRef.current = true;
     setActiveResumeId(resume.id);
     setResumeTitle(resume.title || "Untitled Resume");
     setTemplateId(templateFromResume(resume));
     reset(resume.data || defaultResumeData, { keepErrors: false });
-    setStoredResumeDraft(resume.data || defaultResumeData);
+    setStoredResumeDraft(resume.data || defaultResumeData, userId);
     setTimeout(() => {
       suppressCloudSaveRef.current = false;
     }, 0);
@@ -433,7 +433,7 @@ export const ResumeBuilder = () => {
         setSignedInUser(normalizedUser);
         setStoredAuthUser(normalizedUser);
 
-        let initialData = getStoredResumeDraft() || defaultResumeData;
+        let initialData = getStoredResumeDraft(normalizedUser.id) || defaultResumeData;
         const linkedinData = consumeLinkedInResumeData();
         if (linkedinData) {
           initialData = linkedinData;
@@ -466,7 +466,7 @@ export const ResumeBuilder = () => {
           setCloudResumes(resumes);
         }
 
-        applyResume(selectedResume);
+        applyResume(selectedResume, normalizedUser.id);
         setIsHydrated(true);
         setSaveStatus("Saved to cloud");
       } catch (error) {
@@ -482,8 +482,8 @@ export const ResumeBuilder = () => {
 
   useEffect(() => {
     if (!isHydrated) return;
-    setStoredResumeDraft(watchedData);
-  }, [isHydrated, watchedData]);
+    setStoredResumeDraft(watchedData, signedInUser?.id);
+  }, [isHydrated, signedInUser?.id, watchedData]);
 
   useEffect(() => {
     if (!isHydrated || !activeResumeId || suppressCloudSaveRef.current) return;
@@ -543,7 +543,7 @@ export const ResumeBuilder = () => {
       const extractedData = await uploadResume(formData);
       const uploadedResumeData = normalizeUploadedResumeData(extractedData);
       reset(uploadedResumeData);
-      setStoredResumeDraft(uploadedResumeData);
+      setStoredResumeDraft(uploadedResumeData, signedInUser?.id);
       trigger();
       toast({
         title: "Resume uploaded successfully",
@@ -621,14 +621,14 @@ export const ResumeBuilder = () => {
     setSignedInUser(null);
     toast({
       title: "Logged out",
-      description: "Your current browser draft is still available in this session.",
+      description: "Sign back in with the same account to keep working on your draft.",
     });
     navigate("/signin", { replace: true });
   };
 
-  const handleSelectResume = (id: number) => {
+  const handleSelectResume = (id: string) => {
     const resume = cloudResumes.find(item => item.id === id);
-    if (resume) applyResume(resume);
+    if (resume) applyResume(resume, signedInUser?.id);
   };
 
   const handleCreateResume = async () => {
@@ -640,7 +640,7 @@ export const ResumeBuilder = () => {
         data: defaultResumeData,
       });
       setCloudResumes(prev => [created, ...prev]);
-      applyResume(created);
+      applyResume(created, signedInUser?.id);
       toast({ title: "Resume created", description: "Your new draft is ready." });
     } catch (error) {
       toast({
@@ -660,7 +660,7 @@ export const ResumeBuilder = () => {
       const remaining = cloudResumes.filter(resume => resume.id !== activeResumeId);
       setCloudResumes(remaining);
       if (remaining[0]) {
-        applyResume(remaining[0]);
+        applyResume(remaining[0], signedInUser?.id);
       } else {
         await handleCreateResume();
       }
@@ -714,12 +714,12 @@ export const ResumeBuilder = () => {
     if (next) void loadVersions();
   };
 
-  const handleRestoreVersion = async (versionId: number) => {
+  const handleRestoreVersion = async (versionId: string) => {
     if (!activeResumeId) return;
     try {
       const restored = await resumesApi.restoreVersion(activeResumeId, versionId);
       setCloudResumes(prev => prev.map(resume => resume.id === restored.id ? restored : resume));
-      applyResume(restored);
+      applyResume(restored, signedInUser?.id);
       toast({ title: "Version restored", description: "The selected snapshot is now active." });
     } catch (error) {
       toast({
@@ -923,7 +923,7 @@ export const ResumeBuilder = () => {
               <Cloud size={16} className="text-muted-foreground" />
               <select
                 value={activeResumeId || ""}
-                onChange={(event) => handleSelectResume(Number(event.target.value))}
+                onChange={(event) => handleSelectResume(event.target.value)}
                 className="h-9 min-w-0 rounded-md border border-input bg-background px-3 text-sm"
               >
                 {cloudResumes.map(resume => (

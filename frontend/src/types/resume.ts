@@ -1,6 +1,6 @@
 /**
- * TypeScript interfaces mirroring backend Pydantic models
- * Updated to match temp-ui component expectations
+ * Source of truth for the resume shape. Mirrored by backend/src/types/resume.ts,
+ * which the DOCX export and upload normalization depend on.
  * Requirements: 1.5, 5.5, 10.1, 10.2
  */
 

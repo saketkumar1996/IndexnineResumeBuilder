@@ -1,48 +1,26 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+backend/node_modules/
+
+# Leftover virtualenv from the pre-MERN backend; safe to delete.
 backend/venv/
-backend/env/
+
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-backend/build/
-backend/develop-eggs/
+# Build outputs
 backend/dist/
-backend/downloads/
-backend/eggs/
-backend/.eggs/
-backend/lib/
-backend/lib64/
-backend/parts/
-backend/sdist/
-backend/var/
-backend/wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
 
 # Testing
-.coverage
-.pytest_cache/
-.hypothesis/
+coverage/
 htmlcov/
-.tox/
-.nox/
 coverage.xml
 *.cover
 .cache
-nosetests.xml
 .nyc_output
 
 # Logs
@@ -138,56 +116,5 @@ Thumbs.db
 .rollup.cache/
 .parcel-cache/
 
-# Python specific
-*.pyc
-*.pyo
-*.pyd
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-.tox
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
 # mkdocs documentation
 /site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
