@@ -64,6 +64,11 @@ describe("POST /api/upload-resume", () => {
 });
 
 describe("unknown routes", () => {
+  it("exposes /api/health for the Vercel rewrite", async () => {
+    const response = await request(app).get("/api/health");
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: "healthy", service: "Indexnine-resume-builder" });
+  });
   it("returns a detail envelope the frontend can read", async () => {
     const response = await request(app).get("/api/does-not-exist");
     expect(response.status).toBe(404);

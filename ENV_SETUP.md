@@ -75,35 +75,35 @@ Accounts use email and password. Session cookies carry a JWT signed with
 
 ## Production setup
 
-Render backend:
+Vercel hosts the SPA and the Express API on the same origin. Leave
+`VITE_API_BASE_URL` unset so the browser calls `/api` on the Vercel hostname.
 
 ```env
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/indexnine_resume_builder
 SESSION_SECRET=<long random value>
 SESSION_SECURE=true
-SESSION_SAMESITE=none
-CORS_ORIGINS=https://<your-vercel-app>.vercel.app
-FRONTEND_REDIRECT_URL=https://<your-vercel-app>.vercel.app
+SESSION_SAMESITE=lax
+CORS_ORIGINS=https://<your-app>.vercel.app
+FRONTEND_REDIRECT_URL=https://<your-app>.vercel.app
 OPENAI_API_KEY=<key>
 AI_MODEL=gpt-4o-mini
 ```
 
-Vercel frontend:
-
-```env
-VITE_API_BASE_URL=https://<your-render-api>.onrender.com
-```
+Do not set `VITE_API_BASE_URL` for this layout. A leftover Render URL would send
+auth cookies to the wrong host.
 
 Additional production variables:
 
-- `MONGODB_URI`: MongoDB Atlas connection string. Allow the Render egress IPs (or
-  `0.0.0.0/0` on the free tier) in the Atlas network access list.
+- `MONGODB_URI`: MongoDB Atlas connection string. Allow Vercel (or `0.0.0.0/0`
+  on the free tier) in the Atlas network access list.
 - `SESSION_SECRET`: long random secret used to sign app session cookies. The API
-  refuses to start if this is still the example default while `SESSION_SECURE=true`
-  or a remote `MONGODB_URI` is configured.
-- `SESSION_SECURE=true`: required for HTTPS cookies in production.
-- `SESSION_SAMESITE=none`: required when Vercel and Render are on different domains.
-- `CORS_ORIGINS`: comma-separated allowed frontend origins, including the Vercel URL.
+  refuses to start if this is still the example default while `SESSION_SECURE=true`,
+  the process is on Vercel, or a remote `MONGODB_URI` is configured.
+- `SESSION_SECURE=true`: required for HTTPS cookies in production. On Vercel this
+  defaults to true when unset.
+- `SESSION_SAMESITE=lax`: correct when the SPA and `/api` share a Vercel domain.
+  Use `none` only if the API is on a different site.
+- `CORS_ORIGINS`: comma-separated allowed frontend origins (the Vercel URL).
 - `SESSION_COOKIE_NAME`: optional cookie name override (default `indexnine_session`).
 - `SESSION_MAX_AGE_SECONDS`: optional session lifetime (default 14 days).
 - `OPENAI_API_BASE`: optional OpenAI-compatible base URL (default OpenRouter).

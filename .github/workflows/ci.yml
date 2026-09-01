@@ -75,8 +75,8 @@ jobs:
 
       - run: npm ci
 
-      # Runs the same compile Render performs at deploy time, so a type error or
-      # missing dependency surfaces here rather than in the deploy log.
+      # Typecheck the API the same way a Node host would, so a missing import
+      # fails here rather than in the Vercel function bundle.
       - run: npm run build
 
       # The suite starts its own in-memory MongoDB; no service container needed.

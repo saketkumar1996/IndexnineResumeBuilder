@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { corsOriginList } from "./config/env";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import aiRouter from "./routes/ai";
@@ -29,9 +29,12 @@ export const createApp = (): Express => {
     res.json({ message: "Indexnine Resume Builder API" });
   });
 
-  app.get("/health", (_req, res) => {
+  const health = (_req: Request, res: Response) => {
     res.json({ status: "healthy", service: "Indexnine-resume-builder" });
-  });
+  };
+  app.get("/health", health);
+  // Same handler under /api so a Vercel rewrite of /health still matches Express.
+  app.get("/api/health", health);
 
   app.use("/api/auth", authRouter);
   app.use("/api/resumes", resumesRouter);

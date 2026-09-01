@@ -1,8 +1,16 @@
 {
-  "installCommand": "npm install --prefix frontend --include=dev",
+  "framework": null,
+  "installCommand": "npm install --prefix frontend --include=dev && npm install --prefix backend --omit=dev",
   "buildCommand": "npm run build --prefix frontend",
   "outputDirectory": "frontend/dist",
+  "functions": {
+    "api/[[...path]].ts": {
+      "includeFiles": "backend/src/**",
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
