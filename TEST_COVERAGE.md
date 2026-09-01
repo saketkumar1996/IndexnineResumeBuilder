@@ -54,11 +54,9 @@ services. Set `MONGODB_URI_TEST` to use an existing instance instead.
 ## Frontend Tests (`frontend/src/test/`)
 
 ### Validation Tests
-- **`validation.test.ts`** - Property-based tests using fast-check for Zod schema validation
+  - **`validation.test.ts`** - Property-based tests using fast-check for Zod schema validation
   - Covers all form fields with valid/invalid data generation
   - Boundary condition testing for word counts and formats
-  - Note: 7 tests are currently stale after the expertise word-count refactor,
-    which is why the CI job is marked `continue-on-error`
 
 ### Component Tests
 - **`components.test.tsx`** - React component testing using Testing Library
@@ -140,7 +138,6 @@ npm run test:coverage            # Run with coverage
 The `CI` workflow runs three jobs on every push and pull request:
 
 - **Frontend build** - `npm ci && npm run build` from a clean checkout
-- **Frontend tests** - `npm run test:run` (`continue-on-error` while the 7 stale
-  validation tests are outstanding)
+- **Frontend tests** - `npm run test:run`
 - **Backend tests** - `npm ci && npm run build && npm test`, which compiles the
   same way Render does and runs the API suite against an in-memory MongoDB

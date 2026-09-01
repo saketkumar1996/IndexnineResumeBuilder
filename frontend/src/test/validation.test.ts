@@ -16,9 +16,9 @@ import {
   ResumeSchema
 } from '../schemas/resume';
 
-// Custom arbitraries for property-based testing
-const validEmail = fc.emailAddress();
-const validPhone = fc.stringMatching(/^\+?[\d\s\-\(\)]+$/);
+const validEmail = fc.emailAddress().filter((email) => /^[^@]+@[^@]+\.[^@]+$/.test(email));
+const validPhone = fc.stringMatching(/^\+?[\d\s\-\(\)]+$/).filter((phone) => phone.trim().length > 0);
+const validYear = fc.integer({ min: 1980, max: 2030 }).map(String);
 const validDateFormat = fc.constantFrom(
   'JAN 2020', 'FEB 2021', 'MAR 2022', 'APR 2023', 'MAY 2024',
   'JUN 2019', 'JUL 2020', 'AUG 2021', 'SEP 2022', 'OCT 2023',
@@ -38,19 +38,14 @@ const validWordCountSummary = fc.array(
 ).map(words => words.join(' '));
 
 const invalidWordCountSummary = fc.oneof(
-  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 1, maxLength: 49 }),
-  fc.array(fc.string({ minLength: 2, maxLength: 12 }), { minLength: 201, maxLength: 280 })
+  fc.array(fc.string({ minLength: 2, maxLength: 12 }).filter(s => s.trim().length > 0), { minLength: 1, maxLength: 49 }),
+  fc.array(fc.string({ minLength: 2, maxLength: 12 }).filter(s => s.trim().length > 0), { minLength: 201, maxLength: 280 })
 ).map(words => words.join(' '));
 
 const validCommaSeparatedSkills = fc.array(
   cleanText.filter(s => !s.includes(',')),
-  { minLength: 3, maxLength: 15 }
+  { minLength: 1, maxLength: 15 }
 ).map(skills => skills.join(', '));
-
-const invalidSkillsNoCommas = fc.array(
-  cleanText.filter(s => !s.includes(',')),
-  { minLength: 2, maxLength: 10 }
-).map(skills => skills.join(' '));
 
 const validResponsibilities = fc.array(
   cleanText.filter(s => s.length >= 10),
@@ -66,12 +61,14 @@ describe('Header Schema Validation', () => {
   it('should accept valid header data', () => {
     fc.assert(fc.property(
       cleanText,
+      cleanText,
       validEmail,
       validPhone,
       cleanText,
-      (fullName, email, phone, location) => {
+      (fullName, designation, email, phone, location) => {
         const result = HeaderSchema.safeParse({
           fullName: fullName.slice(0, 100),
+          designation: designation.slice(0, 100),
           email,
           phone,
           location: location.slice(0, 100)
@@ -87,13 +84,14 @@ describe('Header Schema Validation', () => {
       (emojiText) => {
         const result = HeaderSchema.safeParse({
           fullName: emojiText,
+          designation: 'Software Engineer',
           email: 'test@example.com',
           phone: '+1 555-123-4567',
           location: 'San Francisco, CA'
         });
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues.some(issue => 
+          expect(result.error.issues.some(issue =>
             issue.message.toLowerCase().includes('emoji') ||
             issue.message.toLowerCase().includes('icon') ||
             issue.message.toLowerCase().includes('graphic')
@@ -105,10 +103,11 @@ describe('Header Schema Validation', () => {
 
   it('should reject invalid email formats', () => {
     const invalidEmails = ['invalid-email', 'test@', '@example.com', 'test.example.com'];
-    
+
     invalidEmails.forEach(email => {
       const result = HeaderSchema.safeParse({
         fullName: 'John Doe',
+        designation: 'Software Engineer',
         email,
         phone: '+1 555-123-4567',
         location: 'San Francisco, CA'
@@ -119,10 +118,11 @@ describe('Header Schema Validation', () => {
 
   it('should reject invalid phone formats', () => {
     const invalidPhones = ['abc', '123abc', 'phone-number'];
-    
+
     invalidPhones.forEach(phone => {
       const result = HeaderSchema.safeParse({
         fullName: 'John Doe',
+        designation: 'Software Engineer',
         email: 'test@example.com',
         phone,
         location: 'San Francisco, CA'
@@ -150,7 +150,7 @@ describe('Expertise Schema Validation', () => {
         const result = ExpertiseSchema.safeParse({ summary });
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues.some(issue => 
+          expect(result.error.issues.some(issue =>
             issue.message.toLowerCase().includes('word')
           )).toBe(true);
         }
@@ -162,15 +162,14 @@ describe('Expertise Schema Validation', () => {
     fc.assert(fc.property(
       textWithEmojis,
       (emojiText) => {
-        // Pad to valid word count
         const words = emojiText.split(' ');
         const paddedWords = [...words, ...Array(85).fill('word')];
         const summary = paddedWords.slice(0, 100).join(' ');
-        
+
         const result = ExpertiseSchema.safeParse({ summary });
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.issues.some(issue => 
+          expect(result.error.issues.some(issue =>
             issue.message.toLowerCase().includes('emoji') ||
             issue.message.toLowerCase().includes('icon') ||
             issue.message.toLowerCase().includes('graphic')
@@ -181,66 +180,44 @@ describe('Expertise Schema Validation', () => {
   });
 
   it('should validate exact word count boundaries', () => {
-    // Exactly 50 words should be valid
     const words50 = Array(50).fill('word').join(' ');
-    const result50 = ExpertiseSchema.safeParse({ summary: words50 });
-    expect(result50.success).toBe(true);
+    expect(ExpertiseSchema.safeParse({ summary: words50 }).success).toBe(true);
 
-    // Exactly 200 words should be valid
     const words200 = Array(200).fill('word').join(' ');
-    const result200 = ExpertiseSchema.safeParse({ summary: words200 });
-    expect(result200.success).toBe(true);
+    expect(ExpertiseSchema.safeParse({ summary: words200 }).success).toBe(true);
 
-    // 49 words should be invalid
     const words49 = Array(49).fill('word').join(' ');
-    const result49 = ExpertiseSchema.safeParse({ summary: words49 });
-    expect(result49.success).toBe(false);
+    expect(ExpertiseSchema.safeParse({ summary: words49 }).success).toBe(false);
 
-    // 201 words should be invalid
     const words201 = Array(201).fill('word').join(' ');
-    const result201 = ExpertiseSchema.safeParse({ summary: words201 });
-    expect(result201.success).toBe(false);
+    expect(ExpertiseSchema.safeParse({ summary: words201 }).success).toBe(false);
   });
 });
 
 describe('Skills Schema Validation', () => {
-  it('should accept valid comma-separated skills', () => {
+  it('should accept comma-separated skills', () => {
     fc.assert(fc.property(
-      cleanText,
       validCommaSeparatedSkills,
-      (category, skills) => {
-        const result = SkillsSchema.safeParse({ 
-          category: category.slice(0, 50),
-          skills 
-        });
+      (skills) => {
+        const result = SkillsSchema.safeParse({ skills });
         expect(result.success).toBe(true);
       }
     ));
   });
 
-  it('should reject skills without commas', () => {
-    fc.assert(fc.property(
-      invalidSkillsNoCommas,
-      (skills) => {
-        const result = SkillsSchema.safeParse({ skills });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.issues.some(issue => 
-            issue.message.toLowerCase().includes('comma')
-          )).toBe(true);
-        }
-      }
-    ));
-  });
-
-  it('should reject single skill without comma', () => {
+  it('should accept a single skill', () => {
     const result = SkillsSchema.safeParse({ skills: 'Python' });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('should accept skills with extra spaces', () => {
     const result = SkillsSchema.safeParse({ skills: 'Python , JavaScript , React' });
     expect(result.success).toBe(true);
+  });
+
+  it('should reject skills with emojis', () => {
+    const result = SkillsSchema.safeParse({ skills: 'Python, JavaScript 🚀' });
+    expect(result.success).toBe(false);
   });
 });
 
@@ -279,7 +256,7 @@ describe('Experience Schema Validation', () => {
           endDate: 'Present',
           responsibilities
         });
-        
+
         expect(result.success).toBe(false);
       }
     ));
@@ -287,7 +264,7 @@ describe('Experience Schema Validation', () => {
 
   it('should reject invalid date formats', () => {
     const invalidDates = ['January 2020', '01/2020', '2020-01', 'Jan 20'];
-    
+
     invalidDates.forEach(date => {
       const result = ExperienceSchema.safeParse({
         company: 'Tech Corp',
@@ -302,7 +279,6 @@ describe('Experience Schema Validation', () => {
   });
 
   it('should accept Present as end date but not start date', () => {
-    // Present should be valid for endDate
     const validResult = ExperienceSchema.safeParse({
       company: 'Tech Corp',
       title: 'Developer',
@@ -313,7 +289,6 @@ describe('Experience Schema Validation', () => {
     });
     expect(validResult.success).toBe(true);
 
-    // Present should be invalid for startDate
     const invalidResult = ExperienceSchema.safeParse({
       company: 'Tech Corp',
       title: 'Developer',
@@ -377,15 +352,17 @@ describe('Education Schema Validation', () => {
       cleanText,
       cleanText,
       cleanText,
-      fc.stringMatching(/^\d{2}\/\d{4}$/),
+      validYear,
+      validYear,
       fc.option(cleanText.filter(s => s.length <= 10)),
       fc.option(cleanText.filter(s => s.length <= 100)),
-      (institution, degree, location, graduationDate, gpa, honors) => {
+      (institution, degree, location, startYear, endYear, gpa, honors) => {
         const result = EducationSchema.safeParse({
           institution: institution.slice(0, 100),
           degree: degree.slice(0, 100),
           location: location.slice(0, 100),
-          graduationDate,
+          startYear,
+          endYear,
           gpa: gpa?.slice(0, 10),
           honors: honors?.slice(0, 100)
         });
@@ -402,7 +379,8 @@ describe('Education Schema Validation', () => {
           institution: emojiText,
           degree: 'Bachelor of Science',
           location: 'Berkeley, CA',
-          graduationDate: '05/2020',
+          startYear: '2016',
+          endYear: '2020',
           gpa: '3.8'
         });
         expect(result.success).toBe(false);
@@ -416,14 +394,12 @@ describe('Award Schema Validation', () => {
     fc.assert(fc.property(
       cleanText,
       cleanText,
-      fc.stringMatching(/^\d{2}\/\d{4}$/),
-      fc.option(cleanText.filter(s => s.length <= 200)),
-      (title, issuer, date, description) => {
+      validYear,
+      (title, organization, year) => {
         const result = AwardSchema.safeParse({
           title: title.slice(0, 100),
-          issuer: issuer.slice(0, 100),
-          date,
-          description: description?.slice(0, 200)
+          organization: organization.slice(0, 100),
+          year
         });
         expect(result.success).toBe(true);
       }
@@ -436,9 +412,8 @@ describe('Award Schema Validation', () => {
       (emojiText) => {
         const result = AwardSchema.safeParse({
           title: emojiText,
-          issuer: 'Tech Awards',
-          date: '12/2020',
-          description: 'Great achievement'
+          organization: 'Tech Awards',
+          year: '2020'
         });
         expect(result.success).toBe(false);
       }
@@ -450,6 +425,7 @@ describe('Complete Resume Schema Validation', () => {
   const validCompleteResume = {
     header: {
       fullName: 'John Doe',
+      designation: 'Software Engineer',
       email: 'john@example.com',
       phone: '+1 555-123-4567',
       location: 'San Francisco, CA'
@@ -457,15 +433,14 @@ describe('Complete Resume Schema Validation', () => {
     expertise: {
       summary: Array(90).fill('word').join(' ')
     },
-    skills: [{
-      category: 'Programming',
+    skills: {
       skills: 'Python, JavaScript, React, Node.js'
-    }],
+    },
     experiences: [{
       company: 'Tech Corp',
       title: 'Developer',
       location: 'San Francisco, CA',
-      startDate: '01/2020',
+      startDate: 'JAN 2020',
       endDate: 'Present',
       responsibilities: ['Task 1', 'Task 2', 'Task 3']
     }],
@@ -479,9 +454,10 @@ describe('Complete Resume Schema Validation', () => {
       institution: 'University',
       degree: 'Bachelor',
       location: 'Berkeley, CA',
-      graduationDate: '05/2020'
+      startYear: '2016',
+      endYear: '2020'
     }],
-    awards: []
+    awards: [] as { title: string; year: string; organization: string }[]
   };
 
   it('should accept complete valid resume', () => {
@@ -494,7 +470,6 @@ describe('Complete Resume Schema Validation', () => {
       header: validCompleteResume.header,
       expertise: validCompleteResume.expertise,
       skills: validCompleteResume.skills
-      // Missing experiences, projects, education
     };
 
     const result = ResumeSchema.safeParse(incompleteResume);
@@ -502,9 +477,7 @@ describe('Complete Resume Schema Validation', () => {
   });
 
   it('should accept resume without optional awards section', () => {
-    const resumeWithoutAwards = { ...validCompleteResume };
-    delete resumeWithoutAwards.awards;
-
+    const { awards: _awards, ...resumeWithoutAwards } = validCompleteResume;
     const result = ResumeSchema.safeParse(resumeWithoutAwards);
     expect(result.success).toBe(true);
   });
