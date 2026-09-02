@@ -6,6 +6,9 @@ backend/node_modules/
 # Leftover virtualenv from the pre-MERN backend; safe to delete.
 backend/venv/
 
+# Vercel CLI link metadata
+.vercel/
+
 .env
 .env.local
 .env.development.local

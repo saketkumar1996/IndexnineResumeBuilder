@@ -10,6 +10,7 @@ dotenv.config({ path: path.join(projectRoot, ".env") });
 dotenv.config({ path: path.join(backendDir, ".env") });
 
 const DEFAULT_SESSION_SECRET = "dev-indexnine-change-me";
+const LOCAL_MONGODB_URI = "mongodb://127.0.0.1:27017/indexnine_resume_builder";
 
 const str = (key: string, fallback = ""): string => (process.env[key] ?? fallback).trim();
 const bool = (key: string, fallback = false): boolean => {
@@ -26,15 +27,26 @@ const sameSite = (): "lax" | "strict" | "none" => {
   return raw === "strict" || raw === "none" ? raw : "lax";
 };
 
+const onVercel = str("VERCEL") === "1";
+
+const vercelHttpsOrigin = (host: string): string | null => {
+  const trimmed = host.trim().replace(/\/$/, "");
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed.replace(/\/$/, "");
+  return `https://${trimmed}`;
+};
+
 export const env = {
   port: int("PORT", 8000),
   nodeEnv: str("NODE_ENV", "development"),
-  mongodbUri: str("MONGODB_URI", "mongodb://127.0.0.1:27017/indexnine_resume_builder"),
+  // Vercel functions cannot reach a developer's localhost MongoDB. Fail fast
+  // unless MONGODB_URI is set on the project instead of hanging on 127.0.0.1.
+  mongodbUri: str("MONGODB_URI", onVercel ? "" : LOCAL_MONGODB_URI),
 
   sessionCookieName: str("SESSION_COOKIE_NAME", "indexnine_session"),
   sessionSecret: str("SESSION_SECRET") || str("SECRET_KEY") || DEFAULT_SESSION_SECRET,
   sessionMaxAgeSeconds: int("SESSION_MAX_AGE_SECONDS", 60 * 60 * 24 * 14),
-  sessionSecure: bool("SESSION_SECURE", false),
+  sessionSecure: bool("SESSION_SECURE", onVercel),
   sessionSameSite: sameSite(),
 
   corsOrigins: str("CORS_ORIGINS"),
@@ -55,11 +67,11 @@ export const env = {
  */
 export const assertSessionSecretIsSafe = (): void => {
   const looksRemote = Boolean(env.mongodbUri) && !/(localhost|127\.0\.0\.1)/.test(env.mongodbUri);
-  if (env.sessionSecret === DEFAULT_SESSION_SECRET && (env.sessionSecure || looksRemote)) {
+  if (env.sessionSecret === DEFAULT_SESSION_SECRET && (env.sessionSecure || looksRemote || onVercel)) {
     throw new Error(
       "SESSION_SECRET is not set (or still the default 'dev-indexnine-change-me') while " +
-        "SESSION_SECURE=true or a remote MONGODB_URI is configured, which indicates a " +
-        "production-like deployment. Set SESSION_SECRET to a long random value before starting the app."
+        "SESSION_SECURE=true, Vercel is hosting the API, or a remote MONGODB_URI is configured. " +
+        "Set SESSION_SECRET to a long random value before starting the app."
     );
   }
 };
@@ -77,6 +89,11 @@ export const corsOriginList = (): string[] => {
   for (const origin of env.corsOrigins.split(",")) {
     const trimmed = origin.trim().replace(/\/$/, "");
     if (trimmed) origins.add(trimmed);
+  }
+  // Same-origin /api calls do not need CORS; these cover a leftover absolute API URL.
+  for (const host of [str("VERCEL_URL"), str("VERCEL_PROJECT_PRODUCTION_URL")]) {
+    const origin = vercelHttpsOrigin(host);
+    if (origin) origins.add(origin);
   }
   return [...origins].sort();
 };

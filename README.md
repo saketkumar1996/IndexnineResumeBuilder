@@ -33,6 +33,25 @@ npm run dev                # http://localhost:3000
 The Vite dev server proxies `/api` to `http://localhost:8000`, so no frontend
 environment variables are needed locally.
 
+## Production (Vercel)
+
+Frontend and API ship as one Vercel project. The SPA is `frontend/dist`; Express
+is the serverless function in `api/index.ts`. Same-origin `/api` calls mean
+you do **not** set `VITE_API_BASE_URL`.
+
+Set these on the Vercel project (Production + Preview):
+
+- `MONGODB_URI`
+- `SESSION_SECRET` (long random value, not the example default)
+- `SESSION_SECURE=true`
+- `SESSION_SAMESITE=lax`
+- `FRONTEND_REDIRECT_URL=https://<your-app>.vercel.app`
+- `CORS_ORIGINS=https://<your-app>.vercel.app`
+- `OPENAI_API_KEY` (optional, required for AI)
+- `AI_MODEL=gpt-4o-mini`
+
+Allow Vercel (or `0.0.0.0/0` on the Atlas free tier) in MongoDB Atlas network access.
+
 ## Testing
 
 ### Backend Tests
@@ -119,7 +138,7 @@ React form  ->  Zod validation  ->  Express API  ->  MongoDB
 - `POST /api/export/docx` - Download an editable Word document
 
 ### Health
-- `GET /health` - Health check used by the Render deploy
+- `GET /health` and `GET /api/health` - Health check used by Vercel
 
 Errors use `{ "detail": ... }`, where `detail` is a message string or an object
 with `message` and `errors`.

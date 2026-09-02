@@ -1,0 +1,9 @@
+backend/venv
+backend/dist
+backend/src/tests
+backend/ai_output_logs
+frontend/src/test
+**/.git
+*.md
+.kiro
+.cursor
